@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, OrbitControls, Line, Sparkles } from '@react-three/drei'
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { OrbitControls, Line } from '@react-three/drei'
+import { Suspense, useEffect, useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import { nodes, type Era, type NodeId } from '../data/atlas'
@@ -16,6 +16,7 @@ type WorldProps = {
   showAllMarkers?: boolean
   riskView?: boolean
   paused?: boolean
+  guided?: boolean
 }
 type Vec3 = [number, number, number]
 const steel = '#2b4852'
@@ -401,52 +402,68 @@ function Steam() {
     </mesh>)}
   </group>
 }
-function Markers({ selected, onSelect, showAllMarkers }: Pick<WorldProps,'selected'|'onSelect'|'showAllMarkers'>) {
-  return <group>
-    {nodes.filter((n,i)=>i<8 || showAllMarkers || n.id===selected).map(n=><group key={n.id} position={n.coordinates}>
-      <mesh position={[0,-.12,0]} rotation={[-Math.PI/2,0,0]}>
-        <ringGeometry args={[.24,.27,36]}/>
-        <meshBasicMaterial color={selected===n.id?'#e7ffcb':'#77efcf'} transparent opacity={selected===n.id?.8:.35} side={THREE.DoubleSide}/>
-      </mesh>
-      <Html center position={[0,.35,0]} distanceFactor={18} zIndexRange={[60,10]}>
-        <button type="button" className={'world-marker '+(selected===n.id?'active':'')} onClick={(e)=>{e.stopPropagation();onSelect(n.id)}} aria-label={'Открыть прогноз: '+n.name}>
-          <span className="marker-number">{n.number}</span>
-          <span className="marker-text">{n.label}</span>
-          <span className="marker-dot" />
-        </button>
-      </Html>
-    </group>)}
-  </group>
+function MarkerProjection({layerRef}:{layerRef:RefObject<HTMLDivElement|null>}){
+  const {camera}=useThree()
+  const vector=useMemo(()=>new THREE.Vector3(),[])
+  useFrame(()=>{
+    const layer=layerRef.current
+    if(!layer)return
+    for(let i=0;i<nodes.length;i++){
+      const element=layer.children[i] as HTMLElement|undefined
+      if(!element)continue
+      const point=nodes[i].coordinates
+      vector.set(point[0],point[1]+.35,point[2]).project(camera)
+      element.style.left=((vector.x+1)*50).toFixed(3)+'%'
+      element.style.top=((1-vector.y)*50).toFixed(3)+'%'
+      element.style.visibility=vector.z>-1&&vector.z<1&&Math.abs(vector.x)<1.04&&Math.abs(vector.y)<1.04?'visible':'hidden'
+    }
+  })
+  return null
 }
-function CameraRig({selected,resetKey}: {selected:NodeId|null; resetKey:number}) {
-  const {camera} = useThree()
+const heroPosition=new THREE.Vector3(21,16,25.5)
+const heroTarget=new THREE.Vector3(0,1.1,0)
+const guidedAnchors:Partial<Record<NodeId,{position:[number,number,number];target:[number,number,number]}>>={
+  furnace:{position:[12.5,9.0,8.3],target:[2.25,3.0,-3.7]},
+  robotics:{position:[5.8,7.1,12.1],target:[-2.4,1.65,3.18]},
+  energy:{position:[-15.1,9.2,10],target:[-7.2,1.7,3.55]},
+  network:{position:[-9.5,10.9,-13],target:[-.7,2,-6.5]}
+}
+function CameraRig({selected,resetKey,guided}:{selected:NodeId|null;resetKey:number;guided?:boolean}){
+  const {camera}=useThree()
   const controls=useRef<OrbitControlsType>(null)
-  const animation=useRef<{position:THREE.Vector3;target:THREE.Vector3;active:boolean} | null>(null)
+  const animation=useRef<{position:THREE.Vector3;target:THREE.Vector3;active:boolean}|null>(null)
   useEffect(()=>{
     const node=nodes.find(n=>n.id===selected)
-    const target=node?new THREE.Vector3(node.coordinates[0]*.50,1.0,node.coordinates[2]*.5):new THREE.Vector3(0,1.0,0)
-    const pos=node? new THREE.Vector3(target.x+15,target.y+14,target.z+19) : new THREE.Vector3(20,17.5,23.5)
-    animation.current={position:pos,target,active:true}
-  },[selected,resetKey])
+    const anchor=selected?guidedAnchors[selected]:null
+    const target=anchor?new THREE.Vector3(...anchor.target):node?
+      new THREE.Vector3(node.coordinates[0]*.6,1.4,node.coordinates[2]*.58):heroTarget.clone()
+    const position=anchor?new THREE.Vector3(...anchor.position):node?
+      new THREE.Vector3(target.x+12.2,target.y+10,target.z+14.2):heroPosition.clone()
+    animation.current={position,target,active:true}
+  },[selected,resetKey,guided])
   useFrame((_,delta)=>{
-    if(!controls.current || !animation.current?.active) return
-    const v=animation.current
-    const k=1-Math.exp(-delta*3.6)
-    camera.position.lerp(v.position,k)
-    controls.current.target.lerp(v.target,k)
+    if(!controls.current||!animation.current?.active)return
+    const value=animation.current
+    const alpha=1-Math.exp(-delta*(guided?2:3.5))
+    camera.position.lerp(value.position,alpha)
+    controls.current.target.lerp(value.target,alpha)
     controls.current.update()
-    if(camera.position.distanceTo(v.position)<.035 && controls.current.target.distanceTo(v.target)<.03)v.active=false
+    if(camera.position.distanceTo(value.position)<.035&&controls.current.target.distanceTo(value.target)<.03)value.active=false
   })
-  return <OrbitControls ref={controls} enableDamping dampingFactor={.08} maxPolarAngle={Math.PI*.46} minPolarAngle={Math.PI*.17} minDistance={17} maxDistance={48} screenSpacePanning enablePan rotateSpeed={.55} zoomSpeed={.7} panSpeed={.65} onStart={()=>{if(animation.current)animation.current.active=false}}/>
+  return <OrbitControls ref={controls} enabled={!guided} enableDamping dampingFactor={.085}
+    maxPolarAngle={Math.PI*.48} minPolarAngle={Math.PI*.13}
+    minDistance={8} maxDistance={54} screenSpacePanning enablePan
+    rotateSpeed={.45} zoomSpeed={.7} panSpeed={.6}
+    onStart={()=>{if(animation.current)animation.current.active=false}}/>
 }
-function Scene({year,selected,onSelect,resetKey,showAllMarkers,riskView}: WorldProps) {
+function Scene({year,selected,onSelect,resetKey,riskView,guided,layerRef}:WorldProps&{layerRef:RefObject<HTMLDivElement|null>}) {
   return <>
     <color attach="background" args={['#081915']} />
     <fog attach="fog" args={['#081915',35,83]}/>
-    <ambientLight intensity={1.35} color="#86b2bc"/>
-    <hemisphereLight intensity={1.7} color="#b6e0dc" groundColor="#172a32"/>
-    <directionalLight position={[-10,21,17]} intensity={3.0} color="#e5f5ea" castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-17} shadow-camera-right={17} shadow-camera-top={17} shadow-camera-bottom={-17} shadow-bias={-.0006} />
-    <directionalLight position={[14,6,-9]} intensity={1.4} color="#6cd8c4" />
+    <ambientLight intensity={.65} color="#b1c9c0"/>
+    <hemisphereLight intensity={1.0} color="#daeee0" groundColor="#172a32"/>
+    <directionalLight position={[-10,21,17]} intensity={3.2} color={year===2030?'#ffe1bc':year===2035?'#d4edfc':'#d5ffe5'} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-17} shadow-camera-right={17} shadow-camera-top={17} shadow-camera-bottom={-17} shadow-bias={-.0006} />
+    <directionalLight position={[14,6,-9]} intensity={2} color={year===2030?'#75cbbd':year===2035?'#81d5f0':'#97f2c8'} />
     <pointLight position={[2,4,-3]} intensity={21} distance={9} color="#ed9e60" />
     <pointLight position={[-6,3,3]} intensity={6} distance={10} color="#5fdfcb" />
     <group>
@@ -467,22 +484,32 @@ function Scene({year,selected,onSelect,resetKey,showAllMarkers,riskView}: WorldP
       {Array.from({length:5},(_,i)=><Drone key={i} index={i} year={year}/>)}
       <Steam/>
       <FuturisticOverlays year={year}/>
-      <Markers selected={selected} onSelect={onSelect} showAllMarkers={showAllMarkers}/>
       <CyberRiskOverlay selected={selected} active={Boolean(riskView)}/>
     </group>
-    <gridHelper args={[85,68,'#193844','#122d36']} position={[0,-1.22,0]}/>
-    <Sparkles count={38} speed={.15} scale={[29,9,26]} size={1.2} color="#87b7bc" position={[0,2,0]} opacity={.22}/>
-    <CameraRig selected={selected} resetKey={resetKey}/>
+    <mesh position={[0,-1.45,0]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[200,200]}/><meshStandardMaterial color="#081b18" roughness={1}/></mesh>
+    <CameraRig selected={selected} resetKey={resetKey} guided={guided}/>
+    <MarkerProjection layerRef={layerRef}/>
   </>
 }
 export function IndustrialWorld(props: WorldProps) {
+  const layerRef=useRef<HTMLDivElement>(null)
   const webGLSupported = useMemo(()=>hasWebGL(),[])
   if(!webGLSupported)return <FallbackWorld onSelect={props.onSelect} selected={props.selected}/>
   return <div className="world-canvas" role="region" aria-label="Интерактивная трёхмерная модель металлургического предприятия будущего">
     <WorldErrorBoundary onSelect={props.onSelect} selected={props.selected}>
-    <Canvas frameloop={props.paused ? 'demand':'always'} shadows={window.innerWidth>760} dpr={[1,1.65]} camera={{position:[20,17.5,23.5],fov:40,near:.1,far:180}} gl={{antialias:true,alpha:false,powerPreference:'high-performance'}} style={{touchAction:'none'}}>
-      <Suspense fallback={null}><Scene {...props}/></Suspense>
+    <Canvas frameloop={props.paused ? 'demand':'always'} shadows={window.innerWidth>760} dpr={[1,1.65]} camera={{position:[21,16,25.5],fov:40,near:.1,far:180}} gl={{antialias:true,alpha:false,powerPreference:'high-performance',toneMapping:THREE.ACESFilmicToneMapping,toneMappingExposure:1.12}} style={{touchAction:'none'}}>
+      <Suspense fallback={null}><Scene {...props} layerRef={layerRef}/></Suspense>
     </Canvas>
+    <div className="world-markers" ref={layerRef}>
+      {nodes.map((n,i)=><button key={n.id} type="button" data-node={n.id}
+        className={'world-marker '+(props.selected===n.id?'active':'')}
+        style={{display:(!props.showAllMarkers&&i>=8&&props.selected!==n.id)?'none':undefined}}
+        onClick={()=>props.onSelect(n.id)} title={n.name} aria-label={'Открыть прогноз: '+n.name}>
+        <span className="marker-number">{n.number}</span>
+        <span className="marker-text">{n.label}</span>
+        <span className="marker-dot"/>
+      </button>)}
+    </div>
     </WorldErrorBoundary>
   </div>
 }

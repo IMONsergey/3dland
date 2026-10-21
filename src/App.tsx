@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronRight, Copy, Crosshair, Info, Layers3, Menu, Pause, Play, ShieldAlert, X, Zap } from 'lucide-react'
-import { IndustrialWorld } from './components/IndustrialWorld'
+import { CinematicJourney, journeyChapters } from './components/CinematicJourney'
+const IndustrialWorld = lazy(() => import('./components/IndustrialWorld').then(mod => ({default:mod.IndustrialWorld})))
 import { eras, eraInfo, nodeById, nodes, sectors, type Era, type NodeId } from './data/atlas'
 import './styles.css'
 import './components/workbench.css'
+import './components/journey.css'
 
 const Workbench = lazy(() => import('./components/Workbench').then(module => ({ default: module.Workbench })))
 
@@ -34,7 +36,8 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sectorsOpen, setSectorsOpen] = useState(false)
   const [allMarkers, setAllMarkers] = useState(false)
-  const [tour, setTour] = useState(false)
+  const [journeyActive,setJourneyActive] = useState(false)
+  const [journeyStep,setJourneyStep] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [toast, setToast] = useState('')
 
@@ -51,11 +54,29 @@ export default function App() {
 
   const reset = () => {
     setSelected(null)
-    setTour(false)
     setResetKey(i => i + 1)
   }
 
+  const beginJourney = () => {
+    setJourneyActive(true)
+    setJourneyStep(0)
+    setSelected(journeyChapters[0].node)
+    setYear(journeyChapters[0].year)
+    setTab('opportunity')
+    setPlaying(false)
+  }
+  const moveJourney = (index:number) => {
+    const chapter=journeyChapters[index]
+    if(!chapter)return
+    setJourneyStep(index)
+    setSelected(chapter.node)
+    setYear(chapter.year)
+    setTab(chapter.risk?'risk':'opportunity')
+  }
+  const endJourney = () => {setJourneyActive(false);reset()}
+
   const openAtlas = () => {
+    setJourneyActive(false)
     setMobileMenuOpen(false)
     setAboutOpen(false)
     setSectorsOpen(false)
@@ -68,16 +89,6 @@ export default function App() {
     focus(nodes[next].id)
   }
 
-  const beginTour = () => {
-    setTour(true)
-    focus(nodes[0].id)
-  }
-
-  const advanceTour = () => {
-    if (index >= nodes.length - 1) { reset(); return }
-    nextNode(1)
-  }
-
   useEffect(() => {
     const url = new URL(location.href)
     url.searchParams.set('year', String(year))
@@ -88,7 +99,7 @@ export default function App() {
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
-      if (workbenchOpen) return
+      if (workbenchOpen || journeyActive) return
       if (event.target instanceof HTMLElement && event.target.closest('input,textarea,select,[contenteditable]')) return
       if (event.key === 'Escape') {
         if (aboutOpen) setAboutOpen(false)
@@ -105,7 +116,7 @@ export default function App() {
     }
     window.addEventListener('keydown', keydown)
     return () => window.removeEventListener('keydown', keydown)
-  }, [aboutOpen, sectorsOpen, mobileMenuOpen, workbenchOpen])
+  }, [aboutOpen, sectorsOpen, mobileMenuOpen, workbenchOpen, journeyActive])
 
   useEffect(() => {
     if (!playing) return
@@ -127,17 +138,20 @@ export default function App() {
     catch { setToast('Ссылка доступна в адресной строке') }
   }
 
-  return <div className={'app-shell era-'+year+(node?' viewing-node':'')}>
+  return <div className={'app-shell era-'+year+(node&&!journeyActive?' viewing-node':'')+(journeyActive?' journey-active':'')}>
     <div className="scene-space">
+      <Suspense fallback={<div className="scene-loading" role="status">Загружаем пространственную модель...</div>}>
       <IndustrialWorld
         year={year}
         selected={selected}
         onSelect={focus}
         resetKey={resetKey}
         showAllMarkers={allMarkers}
-        riskView={tab === 'risk'}
+        riskView={journeyActive?Boolean(journeyChapters[journeyStep].risk):tab === 'risk'}
+        guided={journeyActive}
         paused={workbenchOpen || aboutOpen || sectorsOpen}
       />
+      </Suspense>
     </div>
     <div className="scene-vignette" aria-hidden="true"/>
 
@@ -154,13 +168,13 @@ export default function App() {
       <button className="mobile-menu-button" aria-label={mobileMenuOpen?'Закрыть меню':'Открыть меню'} onClick={() => setMobileMenuOpen(v => !v)}>{mobileMenuOpen?<X size={22}/>:<Menu size={22}/>}</button>
     </header>
 
-    {!node && <main className="hero-content">
+    {!node && !journeyActive && <main className="hero-content">
       <div className="hero-eyebrow"><span className="eyebrow-line"/>Интерактивный проект о будущем промышленности</div>
       <h1>Завод<br/><span>2040</span><span className="hero-stop">.</span></h1>
       <p className="hero-statement">Загляните внутрь предприятия, которое ещё предстоит построить.</p>
       <p className="hero-description">Технологии будущего, меняющие производство. И новые риски, которые они создают.</p>
       <div className="hero-actions">
-        <button className="primary-action" onClick={beginTour}>Исследовать завод <ArrowUpRight size={21}/></button>
+        <button className="primary-action" onClick={beginJourney}>Исследовать завод <ArrowUpRight size={21}/></button>
         <button className="research-launcher" onClick={openAtlas}>Все прогнозы <ArrowRight size={17}/></button>
       </div>
       <div className="hero-footnote"><span>14 точек исследования</span><span className="hero-footnote-divider"/><span>2030–2040</span></div>
@@ -171,7 +185,7 @@ export default function App() {
       <span>Металлургическое производство</span>
     </div>
 
-    {node && forecast && <section className="detail-card has-selection" aria-label={'Прогноз: '+node.name} key={node.id}>
+    {node && forecast && !journeyActive && <section className="detail-card has-selection" aria-label={'Прогноз: '+node.name} key={node.id}>
       <div className="detail-heading">
         <span className="detail-kicker"><span className="detail-index">{node.number}</span> / {String(nodes.length).padStart(2,'0')} <span className="detail-dot">·</span> {node.category}</span>
         <button className="detail-close" onClick={reset} aria-label="Закрыть прогноз"><X size={20}/></button>
@@ -198,12 +212,6 @@ export default function App() {
       </div>
     </section>}
 
-    {tour && node && <div className="tour-banner">
-      <span>Маршрут исследования</span>
-      <span>{String(index+1).padStart(2,'0')} / {nodes.length}</span>
-      <button onClick={advanceTour}>{index===nodes.length-1?'Завершить':'Следующая точка'} <ArrowRight size={16}/></button>
-    </div>}
-
     <section className="time-deck" aria-label="Горизонт будущего">
       <div className="deck-label">Выберите год</div>
       <div className="timeline">
@@ -222,6 +230,9 @@ export default function App() {
 
     <div className="stage-caption"><span className="caption-indicator"/> Поверните модель, чтобы рассмотреть производство</div>
     <div className="prototype-tag">Независимый концепт · 2026</div>
+
+    <CinematicJourney active={journeyActive} step={journeyStep} onStep={moveJourney}
+      onExit={endJourney} onExplore={endJourney} onAtlas={openAtlas}/>
 
     {mobileMenuOpen && <nav className="mobile-menu" aria-label="Мобильное меню">
       <button onClick={()=>{setMobileMenuOpen(false);reset()}}>Обзор <ChevronRight size={19}/></button>
