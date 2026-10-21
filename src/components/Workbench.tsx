@@ -1,178 +1,177 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Check, ChevronRight, Compass, Cpu, Factory, GitBranch, Globe2, Layers3, Microscope, Search, Shield, ShieldAlert, Target, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronRight, Compass, Search, Shield, ShieldAlert, X } from 'lucide-react'
 import { eras, eraInfo, nodeById, nodes, sectors, trackFor, trackNames, type Era, type NodeId, type NodeTrack } from '../data/atlas'
 import { research, researchMethod, eraContrast } from '../data/research'
 
-type Mode = 'atlas'|'compare'|'method'
-export type WorkbenchProps={
- open:boolean
- onClose:()=>void
- onLocate:(id:NodeId)=>void
- initialNode:NodeId | null
- year:Era
- onYearChange:(year:Era)=>void
+type Mode = 'atlas' | 'compare' | 'method'
+type Props = {
+  open: boolean
+  onClose: () => void
+  onLocate: (id: NodeId) => void
+  initialNode: NodeId | null
+  year: Era
+  onYearChange: (year: Era) => void
 }
-const categories:Array<{id:'all'|NodeTrack;name:string}>=[
- {id:'all',name:'Все узлы'},{id:'production',name:'Производство'},{id:'automation',name:'Автономизация'},{id:'infrastructure',name:'Инфраструктура'}
+
+const filters: Array<{ id: 'all' | NodeTrack, title: string }> = [
+  { id:'all', title:'Все' },
+  { id:'production', title:'Производство' },
+  { id:'automation', title:'Автоматизация' },
+  { id:'infrastructure', title:'Инфраструктура' },
 ]
-const threatStages=[
- {code:'01',title:'ТОЧКА ВЗАИМОДЕЙСТВИЯ',icon:Target,key:'entry' as const},
- {code:'02',title:'ГРАНИЦА ДОВЕРИЯ',icon:GitBranch,key:'boundary' as const},
- {code:'03',title:'ФИЗИЧЕСКОЕ ПОСЛЕДСТВИЕ',icon:Activity,key:'effect' as const},
- {code:'04',title:'ПРИНЦИП ЗАЩИТЫ',icon:Shield,key:'safeguard' as const}
-]
-function Counter({value,total}:{value:number;total:number}){
- return <span className="wb-counter">{String(value).padStart(2,'0')}<i> / {String(total).padStart(2,'0')}</i></span>
-}
-function ScenarioDiff({year,active,onClick}:{year:Era;active:boolean;onClick:()=>void}) {
- const e=eraContrast[year]
- return <button className={'wb-time-choice '+(active?'active':'')} onClick={onClick} aria-pressed={active}>
-  <span className="wb-time-year">{year}</span>
-  <span className="wb-time-name">{eraInfo[year].title}</span>
-  <ChevronRight size={16}/>
-  <span className="wb-time-desc">{e.automation}</span>
- </button>
-}
-function RiskChain({record}:{record:typeof research[NodeId]}){
- return <div className="wb-risk-chain">
-   {threatStages.map((item,i)=>{
-    const Icon=item.icon
-    return <div key={item.key} className={'wb-chain-node '+(i===3?'protect':'')}>
-      <span className="wb-chain-index">{item.code}</span>
-      <span className="wb-chain-icon"><Icon size={15}/></span>
-      <div className="wb-chain-body"><div className="wb-chain-label">{item.title}</div><p>{record[item.key]}</p></div>
-    </div>
-   })}
- </div>
-}
-function HexBackdrop(){
- return <svg className="wb-hex" viewBox="0 0 390 300" fill="none" aria-hidden="true">
-  <path d="m200 8 173 100v95L200 294 26 203v-95L200 8Z" stroke="currentColor" strokeWidth="1"/>
-  <path d="m200 36 147 85v68L200 273 53 189v-68L200 36Z" stroke="currentColor" strokeWidth="1" strokeDasharray="3 9"/>
-  <path d="m200 67 119 67v43L200 248 81 177v-43L200 67Z" stroke="currentColor" opacity=".4"/>
-  <path d="M200 8v286M26 108l347 95M373 108 26 203" stroke="currentColor" strokeDasharray="2 12" opacity=".22"/>
-  <circle cx="200" cy="154" r="8" fill="currentColor"/><circle cx="200" cy="154" r="47" stroke="currentColor" opacity=".5"/>
- </svg>
-}
-export function Workbench({open,onClose,onLocate,initialNode,year,onYearChange}:WorkbenchProps){
- const [mode,setMode]=useState<Mode>('atlas')
- const [nodeId,setNodeId]=useState<NodeId>(initialNode??'furnace')
- const [filter,setFilter]=useState<'all'|NodeTrack>('all')
- const [query,setQuery]=useState('')
- const [listOpen,setListOpen]=useState(false)
- const current=nodeById[nodeId]
- const record=research[nodeId]
- const activeIndex=nodes.findIndex(n=>n.id===nodeId)
- const filtered=useMemo(()=>nodes.filter(n=>{
-   const text=[n.name,n.label,n.category,n.forecast[year].signal,research[n.id].system].join(' ').toLocaleLowerCase('ru')
-   return (filter==='all'||trackFor(n.id)===filter)&&text.includes(query.trim().toLocaleLowerCase('ru'))
- }),[filter,query,year])
- useEffect(()=>{if(open && initialNode)setNodeId(initialNode)},[open,initialNode])
- useEffect(()=>{
-  if(!open)return
-  const onKey=(e:KeyboardEvent)=>{
-   if(e.key==='Escape'){e.preventDefault();onClose()}
-  }
-  window.addEventListener('keydown',onKey)
-  return()=>window.removeEventListener('keydown',onKey)
- },[open,onClose])
- if(!open)return null
- const select=(id:NodeId)=>{setNodeId(id);setListOpen(false)}
- const step=(delta:number)=>select(nodes[(activeIndex+delta+nodes.length)%nodes.length].id)
- return <section className="wb-root" role="dialog" aria-modal="true" aria-label="Исследовательская лаборатория Завод 2040">
+
+export function Workbench({open, onClose, onLocate, initialNode, year, onYearChange}: Props) {
+  const [mode, setMode] = useState<Mode>('atlas')
+  const [nodeId, setNodeId] = useState<NodeId>(initialNode ?? 'furnace')
+  const [filter, setFilter] = useState<'all' | NodeTrack>('all')
+  const [query, setQuery] = useState('')
+  const [listOpen, setListOpen] = useState(false)
+  const current = nodeById[nodeId]
+  const record = research[nodeId]
+  const currentIndex = nodes.findIndex(n => n.id === nodeId)
+  const matches = useMemo(() => nodes.filter(n => {
+    const corpus = [n.name,n.label,n.category,n.forecast[year].signal,research[n.id].system].join(' ').toLowerCase()
+    return (filter === 'all' || trackFor(n.id) === filter) && corpus.includes(query.toLowerCase().trim())
+  }),[filter,query,year])
+
+  useEffect(() => {if (open && initialNode) setNodeId(initialNode)},[open,initialNode])
+  useEffect(() => {
+    if (!open) return
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {event.preventDefault(); if(listOpen)setListOpen(false);else onClose()}
+    }
+    window.addEventListener('keydown',handleKey)
+    return () => window.removeEventListener('keydown',handleKey)
+  },[open,onClose,listOpen])
+
+  if (!open) return null
+  const select = (id:NodeId) => {setNodeId(id);setListOpen(false)}
+  const step = (delta:number) => select(nodes[(currentIndex+delta+nodes.length)%nodes.length].id)
+
+  return <section className="wb-root" role="dialog" aria-modal="true" aria-label="Атлас промышленного будущего">
     <header className="wb-header">
-      <div className="wb-brand"><span className="wb-brand-icon"><Microscope size={20}/></span><div><strong>ЛАБОРАТОРИЯ БУДУЩЕГО</strong><small>ЗАВОД 2040 / ИССЛЕДОВАТЕЛЬСКИЙ АТЛАС</small></div></div>
-      <nav className="wb-navigation" aria-label="Разделы лаборатории">
-        <button className={mode==='atlas'?'active':''} onClick={()=>setMode('atlas')}><Layers3 size={15}/> АТЛАС УЗЛОВ</button>
-        <button className={mode==='compare'?'active':''} onClick={()=>setMode('compare')}><GitBranch size={15}/> СРАВНЕНИЕ ЭПОХ</button>
-        <button className={mode==='method'?'active':''} onClick={()=>setMode('method')}><BookOpen size={15}/> МЕТОДОЛОГИЯ</button>
+      <div className="wb-identity"><span className="wb-brand">завод<span>2040</span></span><span className="wb-slash"/> <span className="wb-section-name">Атлас будущего</span></div>
+      <nav className="wb-navigation" aria-label="Разделы атласа">
+        <button className={mode==='atlas'?'active':''} onClick={()=>setMode('atlas')}>Прогнозы</button>
+        <button className={mode==='compare'?'active':''} onClick={()=>setMode('compare')}>Сравнить годы</button>
+        <button className={mode==='method'?'active':''} onClick={()=>setMode('method')}>О методе</button>
       </nav>
-      <button className="wb-close" aria-label="Вернуться на завод" onClick={onClose}><span>ВЕРНУТЬСЯ НА ЗАВОД</span><X size={20}/></button>
+      <button className="wb-close" onClick={onClose} aria-label="Вернуться к 3D-заводу">К заводу <X size={19}/></button>
     </header>
+
     <div className="wb-layout">
       <aside className={'wb-sidebar '+(listOpen?'open':'')}>
-        <div className="wb-sidebar-top">
-          <div className="wb-sidebar-eyebrow"><span className="wb-signal"/> КАТАЛОГ ПРОГНОЗОВ <Counter value={nodes.length} total={nodes.length}/></div>
-          <label className="wb-search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Найти технологию или систему" aria-label="Поиск по узлам"/>{query&&<button aria-label="Очистить поиск" onClick={()=>setQuery('')}><X size={14}/></button>}</label>
-          <div className="wb-filters" aria-label="Тип производственного узла">{categories.map(c=><button className={filter===c.id?'active':''} key={c.id} onClick={()=>setFilter(c.id)}>{c.name}</button>)}</div>
+        <div className="wb-sidebar-head">
+          <span>Узлы производства</span>
+          <span className="wb-total">{String(nodes.length).padStart(2,'0')}</span>
         </div>
-        <div className="wb-node-list" role="list" aria-label="Производственные узлы">
-         {filtered.map(n=><button role="listitem" key={n.id} className={'wb-node-link '+(nodeId===n.id?'active':'')} onClick={()=>select(n.id)}>
-           <span className="wb-node-no">{n.number}</span><span className="wb-node-name"><strong>{n.name}</strong><small>{trackNames[trackFor(n.id)]}</small></span><ArrowUpRight size={15}/>
-         </button>)}
-         {!filtered.length&&<div className="wb-no-results">По запросу ничего не найдено. Попробуйте другое название или сбросьте фильтр.</div>}
+        <label className="wb-search"><Search size={17}/><input aria-label="Поиск по узлам" placeholder="Найти технологию" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label="Очистить поиск" onClick={()=>setQuery('')}><X size={15}/></button>}</label>
+        <div className="wb-filters">{filters.map(f=><button key={f.id} className={filter===f.id?'active':''} onClick={()=>setFilter(f.id)}>{f.title}</button>)}</div>
+        <div className="wb-node-list" role="list" aria-label="Исследовательские узлы">
+          {matches.map(n=><button key={n.id} role="listitem" onClick={()=>select(n.id)} className={'wb-node-link '+(nodeId===n.id?'active':'')}>
+            <span className="wb-node-no">{n.number}</span>
+            <span className="wb-node-text"><strong>{n.name}</strong><small>{trackNames[trackFor(n.id)]}</small></span>
+            <ChevronRight size={16}/>
+          </button>)}
+          {!matches.length&&<p className="wb-empty">По вашему запросу ничего не найдено.</p>}
         </div>
-        <div className="wb-sidebar-bottom"><Globe2 size={17}/><span>01 / 06</span><strong>МЕТАЛЛУРГИЯ</strong><span className="wb-muted">ДОСТУПНА</span></div>
+        <div className="wb-sidebar-footer"><span className="wb-live-dot"/> Металлургия <span>01 / 06</span></div>
       </aside>
-      <div className="wb-content">
-       <div className="wb-mobile-control"><button onClick={()=>setListOpen(v=>!v)}><Layers3 size={16}/> КАТАЛОГ УЗЛОВ <ChevronRight size={16}/></button><button onClick={onClose}><X size={18}/></button></div>
-       {mode==='atlas'&&<div className="wb-editorial" key={nodeId}>
-        <div className="wb-breadcrumb"><span>АТЛАС</span><ChevronRight size={12}/><span>МЕТАЛЛУРГИЯ</span><ChevronRight size={12}/><span className="wb-breadcrumb-current">УЗЕЛ {current.number}</span></div>
-        <div className="wb-editorial-hero"><HexBackdrop/><span className="wb-top-index">{current.number}<i> / 14</i></span><div className="wb-type-indicator"><span className="wb-type-dot"/>{current.category}</div>
-          <h2>{current.name}</h2><p>{record.thesis}</p>
-          <div className="wb-hero-actions"><button className="wb-action-main" onClick={()=>onLocate(nodeId)}><Compass size={17}/> НАЙТИ НА ЗАВОДЕ <ArrowUpRight size={16}/></button><div><button aria-label="Предыдущий узел" onClick={()=>step(-1)}><ArrowLeft size={19}/></button><button aria-label="Следующий узел" onClick={()=>step(1)}><ArrowRight size={19}/></button></div></div>
+
+      <main className="wb-main">
+        <div className="wb-mobile-control">
+          <button onClick={()=>setListOpen(v=>!v)}>Все узлы <ChevronDown size={15}/></button>
+          <span>14 прогнозных точек</span>
         </div>
-        <div className="wb-section-heading"><div><span>01 / ВРЕМЕННАЯ ТРАЕКТОРИЯ</span><h3>Три стадии одной технологии</h3></div><span>ПРОГНОСТИЧЕСКАЯ МОДЕЛЬ</span></div>
-        <div className="wb-scenario-years">{eras.map(y=><ScenarioDiff key={y} year={y} active={year===y} onClick={()=>onYearChange(y)}/>)}</div>
-        <div className="wb-opportunity-risk" key={nodeId+'-'+year}>
-          <article className="wb-story-block opportunity">
-            <div className="wb-story-heading"><ZapIcon/><span>ВОЗМОЖНОСТЬ / {year}</span></div>
-            <h4>{current.forecast[year].signal}</h4><p>{current.forecast[year].opportunity}</p>
-          </article>
-          <article className="wb-story-block risk">
-            <div className="wb-story-heading"><ShieldAlert size={17}/><span>КИБЕРФИЗИЧЕСКИЙ РИСК / {year}</span></div>
-            <h4>Что меняется в границах доверия</h4><p>{current.forecast[year].risk}</p>
-          </article>
-        </div>
-        <div className="wb-notebook">
-          <div className="wb-notebook-label"><span className="wb-notebook-symbol">?</span>ВОПРОС К ЭКСПЕРТАМ</div><p>{record.question}</p>
-        </div>
-        <div className="wb-technical-notes"><span>СИСТЕМЫ И ОБОРУДОВАНИЕ</span><p>{record.system}</p></div>
-       </div>}
-       {mode==='compare'&&<div className="wb-comparison" key={nodeId}>
-        <div className="wb-breadcrumb"><span>ЛАБОРАТОРИЯ</span><ChevronRight size={12}/><span>СРАВНЕНИЕ ЭПОХ</span></div>
-        <div className="wb-compare-head"><span className="wb-top-index">2030—2040</span><h2>Как изменится<br/><em>{current.name.toLocaleLowerCase('ru')}?</em></h2>
-          <p>Три гипотезы развития одной системы. Сравните не только возможности, но и новые зависимости, которые возникают при повышении автономности.</p>
-          <button onClick={()=>setMode('atlas')} className="wb-text-button">ВЕРНУТЬСЯ К ИССЛЕДОВАНИЮ <ArrowUpRight size={15}/></button>
-        </div>
-        <div className="wb-compare-grid">{eras.map((y,i)=><article key={y} className={'wb-compare-column '+(year===y?'active':'')}>
-          <div className="wb-compare-era"><span>0{i+1} / ВРЕМЕННОЙ ГОРИЗОНТ</span><strong>{y}</strong><small>{eraInfo[y].title}</small></div>
-          <div className="wb-compare-section"><span>ТЕХНОЛОГИЧЕСКИЙ СДВИГ</span><h3>{current.forecast[y].signal}</h3><p>{current.forecast[y].opportunity}</p></div>
-          <div className="wb-compare-section danger"><span><ShieldAlert size={14}/> НОВАЯ ЗАВИСИМОСТЬ</span><p>{current.forecast[y].risk}</p></div>
-          <div className="wb-compare-section"><span>РОЛЬ ЧЕЛОВЕКА</span><p>{eraContrast[y].role}</p></div>
-          <button className="wb-compare-select" onClick={()=>{onYearChange(y);setMode('atlas')}}>{year===y?<><Check size={16}/> ТЕКУЩИЙ ГОРИЗОНТ</>:<>ИССЛЕДОВАТЬ {y} <ArrowUpRight size={16}/></>}</button>
-        </article>)}</div>
-        <div className="wb-compare-disclaimer"><Shield size={18}/> Временные горизонты — аналитические гипотезы, а не подтверждённые предсказания. Иллюстративные примеры требуют отраслевой экспертизы.</div>
-       </div>}
-       {mode==='method'&&<div className="wb-method">
-        <div className="wb-breadcrumb"><span>ЛАБОРАТОРИЯ</span><ChevronRight size={12}/><span>МЕТОДОЛОГИЯ</span></div>
-        <span className="wb-top-index">О ПОДХОДЕ</span><h2>Будущее<br/>можно исследовать.<br/><em>Не обязательно угадывать.</em></h2>
-        <p className="wb-method-lead">«Завод 2040» связывает развитие технологий, промышленные зависимости и киберфизические риски. Каждый сценарий состоит из четырёх логических слоёв.</p>
-        <div className="wb-method-grid">{researchMethod.map((step,i)=><div className="wb-method-step" key={step.index}><span>{step.index}</span><div className="wb-method-icon">{i===0?<Cpu/>:i===1?<GitBranch/>:i===2?<ShieldAlert/>:<Shield/>}</div><h3>{step.title}</h3><p>{step.text}</p></div>)}</div>
-        <div className="wb-section-heading"><div><span>02 / ОТРАСЛЕВЫЕ МИРЫ</span><h3>От одного завода — к шести отраслям</h3></div></div>
-        <div className="wb-sector-grid">{sectors.map(s=><div key={s.id} className={'wb-sector-card '+(s.availability==='live'?'live':'planned')}><div><span>{s.code} / 06</span><span>{s.availability==='live'?'ДОСТУПНО':'ЗАПЛАНИРОВАНО'}</span></div><Factory size={28}/><h4>{s.name}</h4><p>{s.availability==='live'?'Работающая сцена с узлами, прогнозами и моделью рисков.':'Отдельная производственная сцена и экспертные прогнозы ещё не подготовлены.'}</p></div>)}</div>
-        <div className="wb-method-disclaimer"><ShieldAlert size={18}/><p>Это демонстрационный исследовательский прототип. Все сценарии носят гипотетический характер, не являются официальными прогнозами Kaspersky и не должны использоваться как инженерная оценка безопасности без экспертной проверки.</p></div>
-       </div>}
-      </div>
-      {mode==='atlas'&&<aside className="wb-inspector">
-       <div className="wb-inspector-head"><span><span className="wb-signal"/> МОДЕЛЬ РИСКА</span><span>RISK MAP / {current.number}</span></div>
-       <div className="wb-inspector-body">
-         <div className="wb-graph-overline">КАК ЦИФРОВОЕ ВЛИЯЕТ НА ФИЗИЧЕСКОЕ</div>
-         <RiskChain record={record}/>
-         <div className="wb-inspector-section">
-           <div className="wb-inspector-title"><Shield size={15}/> КОНТРОЛИ И ОГРАНИЧЕНИЯ</div>
-           {record.controls.map((control,i)=><div className="wb-guardrail" key={control}><span>{String(i+1).padStart(2,'0')}</span>{control}</div>)}
-         </div>
-         <div className="wb-inspector-section wb-links">
-           <div className="wb-inspector-title"><GitBranch size={15}/> СВЯЗАННЫЕ СИСТЕМЫ</div>
-           {record.related.map(id=><button onClick={()=>select(id)} key={id}><span className="wb-link-dot"/>{nodeById[id].name}<ArrowUpRight size={14}/></button>)}
-         </div>
-         <div className="wb-inspector-section wb-tags"><div className="wb-inspector-title">КОНТЕКСТ ИССЛЕДОВАНИЯ</div><div>{record.references.map(t=><span key={t}>{t}</span>)}</div></div>
-       </div>
-       <div className="wb-inspector-footer"><span>14 УЗЛОВ / 42 СЦЕНАРИЯ</span><span>ГИПОТЕЗЫ, НЕ АУДИТ</span></div>
-      </aside>}
+        {mode==='atlas'&&<article className="wb-editorial" key={nodeId}>
+          <div className="wb-crumbs">Металлургия <span>/</span> {current.category}</div>
+          <div className="wb-article-top">
+            <div className="wb-overline"><span className="wb-green-dash"/> Узел {current.number} — 14</div>
+            <h1>{current.name}</h1>
+            <p className="wb-lead">{record.thesis}</p>
+            <div className="wb-hero-actions">
+              <button className="wb-action-main" onClick={()=>onLocate(nodeId)}>Показать на заводе <ArrowUpRight size={18}/></button>
+              <div className="wb-step-control">
+                <button aria-label="Предыдущий узел" onClick={()=>step(-1)}><ArrowLeft size={19}/></button>
+                <button aria-label="Следующий узел" onClick={()=>step(1)}><ArrowRight size={19}/></button>
+              </div>
+            </div>
+          </div>
+          <div className="wb-part-title"><span>01 / Сценарий развития</span><p>Выберите временной горизонт</p></div>
+          <div className="wb-scenario-years" role="group" aria-label="Выбор года">
+            {eras.map(y=><button key={y} className={'wb-time-choice '+(year===y?'active':'')} onClick={()=>onYearChange(y)} aria-pressed={year===y}>
+              <strong>{y}</strong><span>{eraInfo[y].title}</span>
+            </button>)}
+          </div>
+          <div className="wb-opportunity-risk" key={nodeId+'-'+year}>
+            <section className="wb-story-block opportunity">
+              <div className="wb-story-label"><span className="wb-disc"/><span>Возможность</span><span className="wb-year">{year}</span></div>
+              <h2>{current.forecast[year].signal}</h2>
+              <p>{current.forecast[year].opportunity}</p>
+            </section>
+            <section className="wb-story-block risk">
+              <div className="wb-story-label"><ShieldAlert size={16}/><span>Новый киберриск</span><span className="wb-year">{year}</span></div>
+              <h2>Что может пойти не так?</h2>
+              <p>{current.forecast[year].risk}</p>
+            </section>
+          </div>
+          <blockquote className="wb-question"><span>Вопрос к экспертам</span><p>«{record.question}»</p></blockquote>
+          <details className="wb-deepdive">
+            <summary><span className="wb-deepdive-label">02 / Разбор киберриска</span><strong>От цифровой зависимости к физическому последствию</strong><span className="wb-deepdive-action">Развернуть <ChevronDown size={18}/></span></summary>
+            <div className="wb-deepdive-content">
+              <div className="wb-risk-chain">
+                {[
+                  {name:'Точка взаимодействия',value:record.entry},
+                  {name:'Граница доверия',value:record.boundary},
+                  {name:'Возможное последствие',value:record.effect},
+                  {name:'Принцип защиты',value:record.safeguard}
+                ].map((stage,i)=><div className="wb-chain-node" key={stage.name}>
+                  <span className="wb-chain-number">{String(i+1).padStart(2,'0')}</span>
+                  <div><h3>{stage.name}</h3><p>{stage.value}</p></div>
+                </div>)}
+              </div>
+              <div className="wb-guardrails">
+                <h3><Shield size={19}/> Что помогает ограничить риск</h3>
+                {record.controls.map((control,i)=><div className="wb-guardrail" key={control}><span>{String(i+1).padStart(2,'0')}</span>{control}</div>)}
+              </div>
+            </div>
+          </details>
+          <div className="wb-related"><div><span>03 / Связанные системы</span><p>{record.system}</p></div><div className="wb-related-list">{record.related.map(id=><button key={id} onClick={()=>select(id)}>{nodeById[id].name} <ArrowUpRight size={15}/></button>)}</div></div>
+          <div className="wb-footnote">Гипотетический сценарий. Требуется отраслевая и экспертная верификация.</div>
+        </article>}
+
+        {mode==='compare'&&<article className="wb-editorial wb-comparison">
+          <div className="wb-crumbs">Атлас <span>/</span> Сравнение временных горизонтов</div>
+          <div className="wb-overline"><span className="wb-green-dash"/> 2030 — 2040</div>
+          <h1>Одно производство.<br/><em>Три варианта будущего.</em></h1>
+          <p className="wb-lead">Как изменится {current.name.toLocaleLowerCase('ru')} — и какие новые зависимости появятся вместе с автоматизацией?</p>
+          <div className="wb-compare-grid">
+            {eras.map(y=><section className={'wb-compare-column '+(year===y?'active':'')} key={y}>
+              <div className="wb-compare-year"><strong>{y}</strong><span>{eraInfo[y].title}</span></div>
+              <div className="wb-compare-segment"><span>Технология</span><h2>{current.forecast[y].signal}</h2><p>{current.forecast[y].opportunity}</p></div>
+              <div className="wb-compare-segment risk"><span>Уязвимость</span><p>{current.forecast[y].risk}</p></div>
+              <div className="wb-compare-segment"><span>Роль человека</span><p>{eraContrast[y].role}</p></div>
+              <button className="wb-compare-select" onClick={()=>{onYearChange(y);setMode('atlas')}}>{year===y?'Текущий год':'Исследовать '+y} <ArrowUpRight size={16}/></button>
+            </section>)}
+          </div>
+        </article>}
+
+        {mode==='method'&&<article className="wb-editorial wb-method">
+          <div className="wb-crumbs">Атлас <span>/</span> О проекте</div>
+          <div className="wb-overline"><span className="wb-green-dash"/> Методология</div>
+          <h1>Будущее —<br/><em>это множество сценариев.</em></h1>
+          <p className="wb-lead">Вместо прогнозов без контекста мы показываем, как технологии меняют предприятие и какие новые условия необходимы для безопасной работы.</p>
+          <div className="wb-method-steps">
+            {researchMethod.map((item,i)=><div className="wb-method-step" key={item.index}><span>{item.index}</span><div><h2>{item.title}</h2><p>{item.text}</p></div>{i<3&&<ArrowRight size={18}/>}</div>)}
+          </div>
+          <div className="wb-part-title"><span>02 / Отраслевые миры</span><p>Платформа может развиваться в шести направлениях</p></div>
+          <div className="wb-sector-grid">
+            {sectors.map(s=><div key={s.id} className={'wb-sector-card '+(s.availability==='live'?'live':'planned')}><span>{s.code}</span><strong>{s.name}</strong><small>{s.availability==='live'?<><Check size={15}/>Доступно</>:'Запланировано'}</small></div>)}
+          </div>
+          <p className="wb-method-note"><ShieldAlert size={19}/> Демонстрационный прототип, не официальный прогноз Kaspersky. Материалы требуют проверки отраслевыми экспертами.</p>
+        </article>}
+      </main>
     </div>
-    <div className="wb-bottom"><span><span className="wb-signal"/> ATLAS / INDUSTRIAL FUTURES</span><span>ПРОТОТИП / НЕЗАВИСИМАЯ КОНЦЕПЦИЯ <i>●</i> 2026</span><button onClick={onClose}>СНОВА К 3D-МОДЕЛИ <ArrowUpRight size={14}/></button></div>
- </section>
+    <footer className="wb-bottom"><span>Завод 2040 / Независимый концепт</span><button onClick={onClose}>Вернуться к 3D-модели <Compass size={16}/></button></footer>
+  </section>
 }
-function ZapIcon(){return <Cpu size={17}/>}

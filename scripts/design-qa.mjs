@@ -1,0 +1,42 @@
+import { chromium } from 'playwright-core'
+import { strict as assert } from 'node:assert'
+const chrome=process.env.CHROME_BIN || (process.platform==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/google-chrome')
+const browser=await chromium.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader']})
+const base=process.env.SITE_URL||'http://127.0.0.1:4317/3dland/'
+const results=[]
+for (const screen of [{name:'desktop',width:1440,height:900,mobile:false},{name:'mobile',width:390,height:844,mobile:true},{name:'tablet',width:1024,height:768,mobile:false}]) {
+ const context=await browser.newContext({viewport:{width:screen.width,height:screen.height},deviceScaleFactor:1,isMobile:screen.mobile,hasTouch:screen.mobile})
+ const page=await context.newPage(); const errors=[]
+ page.on('pageerror',e=>errors.push(e.message))
+ await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000})
+ await page.locator('canvas').waitFor({timeout:30000})
+ await page.waitForTimeout(1250)
+ const home=await page.evaluate(()=>({width:document.documentElement.scrollWidth,innerWidth:innerWidth,year:document.querySelector('.era-button.active')?.textContent?.trim(),hero:document.querySelector('h1')?.innerText,canvas:document.querySelectorAll('canvas').length}))
+ await page.screenshot({path:'preview-redesign-'+screen.name+'-home.png'})
+ if(screen.mobile)await page.locator('.research-launcher').click()
+ else await page.locator('.header-lab').click()
+ await page.locator('.wb-root').waitFor()
+ await page.waitForTimeout(450)
+ const atlas=await page.evaluate(()=>({width:document.documentElement.scrollWidth,title:document.querySelector('.wb-article-top h1')?.textContent,nodes:document.querySelectorAll('.wb-node-link').length}))
+ await page.screenshot({path:'preview-redesign-'+screen.name+'-atlas.png'})
+ await page.locator('.wb-navigation button').nth(1).click()
+ await page.screenshot({path:'preview-redesign-'+screen.name+'-compare.png'})
+ await page.locator('.wb-navigation button').nth(2).click()
+ await page.screenshot({path:'preview-redesign-'+screen.name+'-method.png'})
+ await page.locator('.wb-navigation button').nth(0).click()
+ await page.locator('.wb-action-main').click()
+ await page.locator('.wb-root').waitFor({state:'detached'})
+ await page.locator('.detail-card.has-selection').waitFor({timeout:10000})
+ await page.waitForTimeout(450)
+ await page.screenshot({path:'preview-redesign-'+screen.name+'-detail.png'})
+ await page.locator('.detail-tabs [role=tab]').nth(1).click()
+ await page.screenshot({path:'preview-redesign-'+screen.name+'-risk.png'})
+ assert.equal(await page.locator('.detail-story.risk-mode').count(),1)
+ assert.equal(home.width,screen.width,'home overflow '+screen.name)
+ assert.equal(atlas.width,screen.width,'atlas overflow '+screen.name)
+ results.push({screen:screen.name,home,atlas,errors})
+ await context.close()
+}
+await browser.close()
+console.log(JSON.stringify(results,null,2))
+if(results.some(r=>r.errors.length))process.exit(1)

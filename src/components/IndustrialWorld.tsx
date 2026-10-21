@@ -441,8 +441,8 @@ function CameraRig({selected,resetKey}: {selected:NodeId|null; resetKey:number})
 }
 function Scene({year,selected,onSelect,resetKey,showAllMarkers,riskView}: WorldProps) {
   return <>
-    <color attach="background" args={['#07161e']} />
-    <fog attach="fog" args={['#07161e',35,83]}/>
+    <color attach="background" args={['#081915']} />
+    <fog attach="fog" args={['#081915',35,83]}/>
     <ambientLight intensity={1.35} color="#86b2bc"/>
     <hemisphereLight intensity={1.7} color="#b6e0dc" groundColor="#172a32"/>
     <directionalLight position={[-10,21,17]} intensity={3.0} color="#e5f5ea" castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-17} shadow-camera-right={17} shadow-camera-top={17} shadow-camera-bottom={-17} shadow-bias={-.0006} />
@@ -478,7 +478,7 @@ function Scene({year,selected,onSelect,resetKey,showAllMarkers,riskView}: WorldP
 export function IndustrialWorld(props: WorldProps) {
   const webGLSupported = useMemo(()=>hasWebGL(),[])
   if(!webGLSupported)return <FallbackWorld onSelect={props.onSelect} selected={props.selected}/>
-  return <div className="world-canvas" role="img" aria-label="Интерактивная трёхмерная модель металлургического предприятия будущего">
+  return <div className="world-canvas" role="region" aria-label="Интерактивная трёхмерная модель металлургического предприятия будущего">
     <WorldErrorBoundary onSelect={props.onSelect} selected={props.selected}>
     <Canvas frameloop={props.paused ? 'demand':'always'} shadows={window.innerWidth>760} dpr={[1,1.65]} camera={{position:[20,17.5,23.5],fov:40,near:.1,far:180}} gl={{antialias:true,alpha:false,powerPreference:'high-performance'}} style={{touchAction:'none'}}>
       <Suspense fallback={null}><Scene {...props}/></Suspense>

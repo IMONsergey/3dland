@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core'
 import { strict as assert } from 'node:assert'
 const chrome = process.env.CHROME_BIN || (process.platform==='darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : '/usr/bin/google-chrome')
 const url=process.env.SITE_URL||'http://127.0.0.1:4317/3dland/'
-const browser=await chromium.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader']})
+const browser=await chromium.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--disable-webgl','--disable-gpu']})
 const page=await browser.newPage({viewport:{width:1440,height:900}})
 const errors=[]
 page.on('pageerror',e=>errors.push(e.message))

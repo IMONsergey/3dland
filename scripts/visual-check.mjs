@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core'
 
 const browser = await chromium.launch({
   headless: true,
-  executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  executablePath: process.env.CHROME_BIN || (process.platform==='darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : '/usr/bin/google-chrome'),
   args: ['--no-sandbox', '--enable-webgl', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
 })
 const origin = process.env.SITE_URL || 'http://127.0.0.1:4317/3dland/'
@@ -16,7 +16,9 @@ for (const [kind, viewport, mobile] of [
   const errors=[]
   page.on('pageerror', e=>errors.push(e.message))
   const response = await page.goto(origin, {waitUntil:'networkidle',timeout:30000})
-  await page.waitForTimeout(1800)
+  await page.locator('.era-button').first().waitFor({timeout:30000})
+  await page.locator('canvas, .world-fallback').first().waitFor({timeout:30000})
+  await page.waitForTimeout(450)
   const metrics=await page.evaluate(()=>({
     viewport:window.innerWidth, document:document.documentElement.scrollWidth,
     canvas:document.querySelectorAll('canvas').length,
@@ -40,6 +42,7 @@ for (const [kind, viewport, mobile] of [
     if(await page.locator('.detail-card.has-selection').count()!==0)throw new Error('Escape failed')
   } catch(e) {failed=true; errors.push(String(e))}
   console.log(JSON.stringify({kind,http:response?.status(),metrics,errors}))
+  if(metrics.controls!==3 || metrics.canvas<1 && await page.locator('.world-fallback').count()===0){failed=true;console.error('Incomplete page render',metrics)}
   if(metrics.viewport!==viewport.width||metrics.document>viewport.width) {failed=true; console.error('Viewport overflow',metrics)}
   if(errors.length)failed=true
   await ctx.close()

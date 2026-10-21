@@ -5,6 +5,8 @@
 
 Концептуальная веб-платформа по брифу «Проект 03. Завод 2040». Принцип: будущее промышленности рассматривается через **пару «новая возможность + новая уязвимость»**. Визуальный жанр вдохновлён Earth 2050, но дизайн, модель предприятия и интерактивные механики разработаны отдельно.
 
+**Актуальная визуальная система:** иммерсивная 3D-сцена без постоянных панелей; лёгкая навигация, контекстная карточка при выборе объекта и самостоятельный светлый редакционный атлас. Разбор причинной цепочки киберриска скрыт до запроса читателя. Анализ референсов Kaspersky и причины решений собраны в [DESIGN_RESEARCH.md](./DESIGN_RESEARCH.md).
+
 ## Что уже работает
 
 ### Пространственный мир
@@ -45,7 +47,7 @@
 - Three.js, @react-three/fiber, @react-three/drei.
 - Procedural geometry, animated parametric objects and links.
 - Контентные модели в src/data/atlas.ts, src/data/extraNodes.ts и src/data/research.ts.
-- Разделение загрузки интерактивной лаборатории на отдельный JS/CSS chunk.
+- Отдельная отложенно загружаемая JS-сборка исследовательского атласа; стили загружаются заранее для отсутствия визуальной задержки.
 - CSS adaptive layouts, keyboard navigation, reduced-motion support.
 - GitHub Actions → GitHub Pages.
 
@@ -63,6 +65,7 @@
     npm run test:smoke
     npm run test:deep
     npm run test:release
+    npm run test:design
 
 По умолчанию проверка использует Google Chrome из стандартного macOS-пути; альтернативный бинарник указывается в переменной CHROME_BIN. Локальный Vite по умолчанию используется на http://127.0.0.1:4317/3dland/ при запуске с флагом --port 4317.
 
@@ -96,6 +99,8 @@
     scripts/
       visual-check.mjs               Basic browser smoke
       deep-qa.mjs                    Desktop/mobile/tablet browser QA
+      release-qa.mjs                 All 42 forecasts, cyber chains, non-WebGL fallback
+      design-qa.mjs                  UI screenshots, responsive flows and controls
     .github/workflows/deploy.yml     Automatic publishing to GitHub Pages
 
 ## Следующие производственные этапы
