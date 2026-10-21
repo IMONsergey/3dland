@@ -1,6 +1,7 @@
+import { extraNodes } from './extraNodes'
 export type Era = 2030 | 2035 | 2040
 export type SectorId = 'metallurgy' | 'energy' | 'oil' | 'chemistry' | 'food' | 'water'
-export type NodeId = 'furnace' | 'casting' | 'robotics' | 'energy' | 'logistics' | 'storage' | 'control' | 'perimeter'
+export type NodeId = 'furnace' | 'casting' | 'robotics' | 'energy' | 'logistics' | 'storage' | 'control' | 'perimeter' | 'quality' | 'water' | 'rail' | 'network' | 'maintenance' | 'emissions'
 export type Vector3Tuple = [number, number, number]
 
 export type Prediction = {
@@ -107,5 +108,11 @@ export const nodes: AtlasNode[] = [
       2040: { opportunity: 'Распределённые сенсоры, беспилотники и цифровые модели поддерживают непрерывную оценку состояния инфраструктуры.', risk: 'Комплексные данные инспекции нельзя автоматически считать достоверными; аномалии должны сопоставляться с независимыми источниками.', insight: 'Непрерывная проверка состояния', signal: 'Ambient intelligence' },
     },
   },
+  ...extraNodes
 ]
 export const nodeById = Object.fromEntries(nodes.map(n => [n.id, n])) as Record<NodeId, AtlasNode>
+
+export type NodeTrack = 'production' | 'automation' | 'infrastructure'
+export const trackNames: Record<NodeTrack,string> = {production:'Производство',automation:'Автономизация',infrastructure:'Инфраструктура'}
+const nodeTracks:Record<NodeId,NodeTrack>={furnace:'production',casting:'production',robotics:'automation',energy:'infrastructure',logistics:'automation',storage:'infrastructure',control:'automation',perimeter:'automation',quality:'production',water:'infrastructure',rail:'infrastructure',network:'infrastructure',maintenance:'automation',emissions:'infrastructure'}
+export function trackFor(id:NodeId){return nodeTracks[id]}

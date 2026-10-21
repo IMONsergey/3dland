@@ -4,12 +4,18 @@ import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import { nodes, type Era, type NodeId } from '../data/atlas'
+import { EngineeringDetail } from './EngineeringDetail'
+import { CyberRiskOverlay } from './CyberRiskOverlay'
+import { FallbackWorld, WorldErrorBoundary, hasWebGL } from './FallbackWorld'
 
 type WorldProps = {
   year: Era
   selected: NodeId | null
   onSelect: (id: NodeId) => void
   resetKey: number
+  showAllMarkers?: boolean
+  riskView?: boolean
+  paused?: boolean
 }
 type Vec3 = [number, number, number]
 const steel = '#2b4852'
@@ -395,9 +401,9 @@ function Steam() {
     </mesh>)}
   </group>
 }
-function Markers({ selected, onSelect }: Pick<WorldProps,'selected'|'onSelect'>) {
+function Markers({ selected, onSelect, showAllMarkers }: Pick<WorldProps,'selected'|'onSelect'|'showAllMarkers'>) {
   return <group>
-    {nodes.map(n=><group key={n.id} position={n.coordinates}>
+    {nodes.filter((n,i)=>i<8 || showAllMarkers || n.id===selected).map(n=><group key={n.id} position={n.coordinates}>
       <mesh position={[0,-.12,0]} rotation={[-Math.PI/2,0,0]}>
         <ringGeometry args={[.24,.27,36]}/>
         <meshBasicMaterial color={selected===n.id?'#e7ffcb':'#77efcf'} transparent opacity={selected===n.id?.8:.35} side={THREE.DoubleSide}/>
@@ -433,7 +439,7 @@ function CameraRig({selected,resetKey}: {selected:NodeId|null; resetKey:number})
   })
   return <OrbitControls ref={controls} enableDamping dampingFactor={.08} maxPolarAngle={Math.PI*.46} minPolarAngle={Math.PI*.17} minDistance={17} maxDistance={48} screenSpacePanning enablePan rotateSpeed={.55} zoomSpeed={.7} panSpeed={.65} onStart={()=>{if(animation.current)animation.current.active=false}}/>
 }
-function Scene({year,selected,onSelect,resetKey}: WorldProps) {
+function Scene({year,selected,onSelect,resetKey,showAllMarkers,riskView}: WorldProps) {
   return <>
     <color attach="background" args={['#07161e']} />
     <fog attach="fog" args={['#07161e',35,83]}/>
@@ -445,22 +451,24 @@ function Scene({year,selected,onSelect,resetKey}: WorldProps) {
     <pointLight position={[-6,3,3]} intensity={6} distance={10} color="#5fdfcb" />
     <group>
       <Ground year={year}/>
-      <FactoryHall/>
-      <Furnace year={year}/>
-      <Silos year={year}/>
-      <Warehouse year={year}/>
-      <Robotics year={year}/>
-      <PowerYard year={year}/>
-      <ControlCenter year={year}/>
+      <group onClick={(event)=>{event.stopPropagation();onSelect('casting')}}><FactoryHall/></group>
+      <group onClick={(event)=>{event.stopPropagation();onSelect('furnace')}}><Furnace year={year}/></group>
+      <group onClick={(event)=>{event.stopPropagation();onSelect('storage')}}><Silos year={year}/></group>
+      <group onClick={(event)=>{event.stopPropagation();onSelect('logistics')}}><Warehouse year={year}/></group>
+      <group onClick={(event)=>{event.stopPropagation();onSelect('robotics')}}><Robotics year={year}/></group>
+      <group onClick={(event)=>{event.stopPropagation();onSelect('energy')}}><PowerYard year={year}/></group>
+      <group onClick={(event)=>{event.stopPropagation();onSelect('control')}}><ControlCenter year={year}/></group>
       <Pipework/>
       <FutureExpansion year={year}/>
+      <EngineeringDetail year={year} onSelect={onSelect}/>
       <Personnel year={year}/>
       <MaterialFlow year={year}/>
       <AutonomousVehicles year={year}/>
       {Array.from({length:5},(_,i)=><Drone key={i} index={i} year={year}/>)}
       <Steam/>
       <FuturisticOverlays year={year}/>
-      <Markers selected={selected} onSelect={onSelect}/>
+      <Markers selected={selected} onSelect={onSelect} showAllMarkers={showAllMarkers}/>
+      <CyberRiskOverlay selected={selected} active={Boolean(riskView)}/>
     </group>
     <gridHelper args={[85,68,'#193844','#122d36']} position={[0,-1.22,0]}/>
     <Sparkles count={38} speed={.15} scale={[29,9,26]} size={1.2} color="#87b7bc" position={[0,2,0]} opacity={.22}/>
@@ -468,9 +476,13 @@ function Scene({year,selected,onSelect,resetKey}: WorldProps) {
   </>
 }
 export function IndustrialWorld(props: WorldProps) {
+  const webGLSupported = useMemo(()=>hasWebGL(),[])
+  if(!webGLSupported)return <FallbackWorld onSelect={props.onSelect} selected={props.selected}/>
   return <div className="world-canvas" role="img" aria-label="Интерактивная трёхмерная модель металлургического предприятия будущего">
-    <Canvas shadows dpr={[1,1.65]} camera={{position:[20,17.5,23.5],fov:40,near:.1,far:180}} gl={{antialias:true,alpha:false,powerPreference:'high-performance'}} style={{touchAction:'none'}}>
+    <WorldErrorBoundary onSelect={props.onSelect} selected={props.selected}>
+    <Canvas frameloop={props.paused ? 'demand':'always'} shadows={window.innerWidth>760} dpr={[1,1.65]} camera={{position:[20,17.5,23.5],fov:40,near:.1,far:180}} gl={{antialias:true,alpha:false,powerPreference:'high-performance'}} style={{touchAction:'none'}}>
       <Suspense fallback={null}><Scene {...props}/></Suspense>
     </Canvas>
+    </WorldErrorBoundary>
   </div>
 }

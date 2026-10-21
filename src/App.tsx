@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronRight, Compass, Copy, Crosshair, Eye, Factory, GitBranch, Info, Layers3, Menu, MousePointer2, RotateCcw, ShieldAlert, X, Zap } from 'lucide-react'
 import { IndustrialWorld } from './components/IndustrialWorld'
+const Workbench = lazy(()=>import('./components/Workbench').then(mod=>({default:mod.Workbench})))
+import { BookOpen, Microscope, Play, Pause, Grid3X3 } from 'lucide-react'
 import { eras, eraInfo, nodeById, nodes, sectors, type Era, type NodeId } from './data/atlas'
 import './styles.css'
+import './components/workbench.css'
 
 function getInitialYear(): Era {
   const year = Number(new URLSearchParams(window.location.search).get('year'))
@@ -33,6 +36,10 @@ function App() {
   const [mobileMenu,setMobileMenu] = useState(false)
   const [toast,setToast] = useState('')
   const [tourMode,setTourMode] = useState(false)
+  const [workbenchOpen,setWorkbenchOpen] = useState(false)
+  const [showAllMarkers,setShowAllMarkers] = useState(false)
+  const [autoplay,setAutoplay] = useState(false)
+  const openWorkbench = () => {setSectorOpen(false);setAboutOpen(false);setMobileMenu(false);setWorkbenchOpen(true)}
   const selectedNode = selected ? nodeById[selected] : null
   const currentIndex = useMemo(()=>nodes.findIndex(n=>n.id===selected),[selected])
   const forecast = selectedNode?.forecast[year]
@@ -69,6 +76,7 @@ function App() {
   },[year,selected])
   useEffect(()=>{
     const onKey = (e:KeyboardEvent)=>{
+      if(workbenchOpen)return
       if(e.target instanceof HTMLElement && (e.target.matches('input,textarea,select') || e.target.isContentEditable)) return
       if(e.key==='Escape'){
         if(aboutOpen){setAboutOpen(false);return}
@@ -80,7 +88,15 @@ function App() {
     }
     window.addEventListener('keydown',onKey)
     return ()=>window.removeEventListener('keydown',onKey)
-  },[aboutOpen,sectorOpen])
+  },[aboutOpen,sectorOpen,workbenchOpen])
+  useEffect(()=>{
+    if(!autoplay)return
+    const timer=window.setTimeout(()=>{
+      if(year===2040){setAutoplay(false);return}
+      setYear(eras[eras.indexOf(year)+1])
+    },2700)
+    return ()=>window.clearTimeout(timer)
+  },[autoplay,year])
   useEffect(()=>{
     if(!toast)return
     const timer=window.setTimeout(()=>setToast(''),2700)
@@ -98,7 +114,7 @@ function App() {
   return <div className={'app-shell era-'+year}>
     <div className="ambient ambient-one"/><div className="ambient ambient-two"/>
     <div className="scene-space">
-      <IndustrialWorld year={year} selected={selected} onSelect={focusNode} resetKey={resetKey}/>
+      <IndustrialWorld year={year} selected={selected} onSelect={focusNode} resetKey={resetKey} showAllMarkers={showAllMarkers} riskView={activeTab==='risk'} paused={workbenchOpen||aboutOpen}/>
     </div>
     <div className="scene-shade" aria-hidden="true"/>
     <div className="scene-coordinates" aria-hidden="true">
@@ -112,6 +128,7 @@ function App() {
       </a>
       <div className="header-center"><span className="signal-light"/> ИНТЕРАКТИВНОЕ ИССЛЕДОВАНИЕ <span className="header-separator">/</span> ПРОТОТИП 01</div>
       <div className="header-actions">
+        <button className="header-link header-lab" onClick={openWorkbench}><Microscope size={16}/> ЛАБОРАТОРИЯ <ArrowUpRight size={13}/></button>
         <button className="header-link" onClick={()=>setAboutOpen(true)}><Info size={15}/> О ПРОЕКТЕ</button>
         <span className="divider-vertical"/>
         <button className="header-icon-button" title="Вернуть обзор" aria-label="Вернуть обзор" onClick={resetView}><RotateCcw size={17}/></button>
@@ -123,6 +140,7 @@ function App() {
       <div className="rail-top"><span className="rail-index">01—06</span><span className="rail-track"/></div>
       <div className="rail-sections">
         <button className="rail-symbol active" title="Исследовать завод" aria-label="Исследовать завод" onClick={resetView}><Factory size={20}/><span className="rail-symbol-glow"/></button>
+        <button className="rail-symbol" title="Открыть исследовательскую лабораторию" aria-label="Исследовательская лаборатория" onClick={openWorkbench}><Microscope size={19}/></button>
         <button className="rail-symbol" title="Выбрать отрасль" aria-label="Выбрать отрасль" onClick={()=>setSectorOpen(v=>!v)}><Layers3 size={19}/></button>
         <button className="rail-symbol" title="О проекте" aria-label="О проекте" onClick={()=>setAboutOpen(true)}><Info size={19}/></button>
       </div>
@@ -136,7 +154,7 @@ function App() {
       <p className="intro-copy">Исследуйте технологии, которые изменят промышленность, и новые киберриски, возникающие вместе с ними.</p>
       <button className="primary-action" onClick={startTour}><span className="action-icon"><ArrowUpRight size={21}/></span><span>НАЧАТЬ ИССЛЕДОВАНИЕ</span><ArrowRight className="action-arrow" size={17}/></button>
       <div className="intro-stats">
-        <div><strong>08</strong><span>ТОЧЕК<br/>ИССЛЕДОВАНИЯ</span></div>
+        <div><strong>{String(nodes.length).padStart(2,'0')}</strong><span>ТОЧЕК<br/>ИССЛЕДОВАНИЯ</span></div>
         <div className="stat-border"/><div><strong>03</strong><span>ГОРИЗОНТА<br/>БУДУЩЕГО</span></div>
       </div>
       <div className="sector-select-area">
@@ -176,6 +194,7 @@ function App() {
           <button className="story-switch" onClick={()=>setActiveTab(v=>v==='opportunity'?'risk':'opportunity')}>{activeTab==='opportunity'?'Посмотреть связанный киберриск':'Вернуться к возможности'} <ArrowUpRight size={15}/></button>
         </div>
         <div className="detail-insight"><span>КЛЮЧЕВОЙ СДВИГ</span><strong>{forecast.insight}</strong></div>
+        <button className="detail-research-link" onClick={openWorkbench}><Microscope size={16}/><span>РАЗОБРАТЬ ЦЕПОЧКУ РИСКА<small>Системы, зависимости, меры защиты</small></span><ArrowUpRight size={17}/></button>
         <div className="detail-footer">
           <span>{String(currentIndex+1).padStart(2,'0')} <span className="muted">/ {String(nodes.length).padStart(2,'0')}</span></span>
           <div className="detail-footer-actions">
@@ -189,7 +208,7 @@ function App() {
         <h2 className="empty-title">Будущее<br/>в деталях.</h2>
         <p className="empty-copy">Выберите светящуюся точку на заводе — узнайте о технологии и связанных с ней уязвимостях.</p>
         <div className="empty-tip"><MousePointer2 size={15}/> НАЖМИТЕ НА МАРКЕР</div>
-        <div className="detail-footer detail-footer-empty"><span>08 ИНТЕРАКТИВНЫХ УЗЛОВ</span><ArrowDownRight size={19}/></div>
+        <div className="detail-footer detail-footer-empty"><span>{String(nodes.length).padStart(2,'0')} ИНТЕРАКТИВНЫХ УЗЛОВ</span><ArrowDownRight size={19}/></div>
       </>}
     </section>
 
@@ -197,14 +216,17 @@ function App() {
       <button aria-label="Вернуть общий вид" onClick={resetView} title="Общий вид"><Crosshair size={17}/></button>
       <span className="scene-tools-divider"/>
       <button aria-label="Начать маршрут" onClick={startTour} title="Пошаговый маршрут"><GitBranch size={17}/></button>
+      <span className="scene-tools-divider"/>
+      <button aria-label={showAllMarkers?"Показать основные маркеры":"Показать все маркеры"} aria-pressed={showAllMarkers} className={showAllMarkers?"tool-active":""} onClick={()=>setShowAllMarkers(v=>!v)} title={showAllMarkers?"Основные маркеры":"Все 14 маркеров"}><Grid3X3 size={17}/></button>
     </div>
-    {tourMode && <div className="tour-banner"><span className="tour-dot"/><span>МАРШРУТ ИССЛЕДОВАНИЯ</span><strong>{String(currentIndex+1).padStart(2,'0')} / 08</strong><button onClick={nextTour}>{currentIndex===nodes.length-1?'ЗАВЕРШИТЬ':'ДАЛЕЕ'} <ArrowRight size={15}/></button></div>}
+    <button className="research-launcher" onClick={openWorkbench}><span className="research-launch-icon"><Microscope size={20}/></span><span className="research-launch-copy"><strong>ЛАБОРАТОРИЯ БУДУЩЕГО</strong><small>{nodes.length} ПРОМЫШЛЕННЫХ УЗЛОВ · {nodes.length*3} СЦЕНАРИЯ</small></span><ArrowUpRight size={17}/></button>
+    {tourMode && <div className="tour-banner"><span className="tour-dot"/><span>МАРШРУТ ИССЛЕДОВАНИЯ</span><strong>{String(currentIndex+1).padStart(2,'0')} / {String(nodes.length).padStart(2,'0')}</strong><button onClick={nextTour}>{currentIndex===nodes.length-1?'ЗАВЕРШИТЬ':'ДАЛЕЕ'} <ArrowRight size={15}/></button></div>}
     <section className="time-deck" aria-label="Горизонт будущего">
-      <div className="deck-left"><div className="deck-caption"><span className="deck-light"/><span>ВРЕМЕННАЯ ШКАЛА</span></div><span className="deck-helper">Выберите горизонт</span></div>
+      <div className="deck-left"><div className="deck-caption"><span className="deck-light"/><span>ВРЕМЕННАЯ ШКАЛА</span></div><button className="deck-play" onClick={()=>{if(autoplay){setAutoplay(false)}else{setYear(2030);setAutoplay(true)}}}>{autoplay?<Pause size={13}/>:<Play size={13}/>} {autoplay?"ОСТАНОВИТЬ":"ВОСПРОИЗВЕСТИ"}</button></div>
       <div className="timeline">
         <span className="timeline-track"/>
         <span className="timeline-progress" style={{width:(eras.indexOf(year)*50)+'%'}}/>
-        {eras.map((point,i)=><button key={point} className={'era-button '+(year===point?'active':'')} onClick={()=>setYear(point)} aria-pressed={year===point}>
+        {eras.map((point,i)=><button key={point} className={'era-button '+(year===point?'active':'')} onClick={()=>{setAutoplay(false);setYear(point)}} aria-pressed={year===point}>
           <span className="era-dot"><span/></span><strong>{point}</strong><small>{['БЛИЗКОЕ','СРЕДНЕЕ','ДАЛЬНЕЕ'][i]} БУДУЩЕЕ</small>
         </button>)}
       </div>
@@ -213,6 +235,7 @@ function App() {
     <div className="bottom-info"><div><Eye size={16}/><span>ПЕРЕМЕЩАЙТЕ СЦЕНУ МЫШЬЮ <span className="bottom-separator">·</span> ПРИБЛИЖАЙТЕ КОЛЕСОМ</span></div><div className="bottom-keyboard">ГОД <ButtonKey>←</ButtonKey><ButtonKey>→</ButtonKey><span className="bottom-separator">·</span> ОБЗОР <ButtonKey>ESC</ButtonKey></div></div>
     <div className="demo-label">КОНЦЕПТ-ПРОТОТИП <span>·</span> ПРЕДПОЛОЖИТЕЛЬНЫЕ СЦЕНАРИИ</div>
     {mobileMenu && <div className="mobile-menu">
+      <button onClick={()=>{setMobileMenu(false);openWorkbench()}}><BookOpen size={18}/>Лаборатория и прогнозы<ChevronRight/></button>
       <button onClick={()=>{setMobileMenu(false);setAboutOpen(true)}}><Info size={18}/>О проекте<ChevronRight/></button>
       <button onClick={()=>{setMobileMenu(false);setSectorOpen(true)}}><Layers3 size={18}/>Отрасли<ChevronRight/></button>
       <button onClick={()=>{setMobileMenu(false);resetView()}}><Compass size={18}/>Общий вид<ChevronRight/></button>
@@ -224,11 +247,12 @@ function App() {
         <span className="modal-overline">ПРОМЫШЛЕННОСТЬ × АВТОМАТИЗАЦИЯ × КИБЕРБЕЗОПАСНОСТЬ</span>
         <h2 id="about-title">Будущее создаёт<br/><em>новые возможности.</em><br/>И новые вопросы.</h2>
         <p>«Завод 2040» — экспериментальный интерактивный атлас прогнозов развития промышленных технологий и новых вызовов цифровой безопасности. Исследуйте предприятие, переключайте 2030, 2035 и 2040 годы и открывайте два слоя каждого сценария: возможность и уязвимость.</p>
-        <div className="modal-counters"><div><strong>03</strong><span>ГОРИЗОНТА</span></div><div><strong>08</strong><span>УЗЛОВ</span></div><div><strong>06</strong><span>ОТРАСЛЕЙ В КОНЦЕПЦИИ</span></div></div>
+        <div className="modal-counters"><div><strong>03</strong><span>ГОРИЗОНТА</span></div><div><strong>{String(nodes.length).padStart(2,'0')}</strong><span>УЗЛОВ</span></div><div><strong>06</strong><span>ОТРАСЛЕЙ В КОНЦЕПЦИИ</span></div></div>
         <p className="modal-disclaimer"><ShieldAlert size={18}/> Демонстрационный прототип. Прогнозы являются гипотетическими и не представляют официальную позицию Kaspersky. Доступна детальная сцена металлургии; остальные отрасли запланированы.</p>
         <button className="modal-button" onClick={()=>{setAboutOpen(false);startTour()}}>ИССЛЕДОВАТЬ ЗАВОД <ArrowUpRight size={20}/></button>
       </section>
     </div>}
+    {workbenchOpen && <Suspense fallback={<div className="lab-loading" role="status">ЗАГРУЖАЕМ ИССЛЕДОВАТЕЛЬСКУЮ ЛАБОРАТОРИЮ...</div>}><Workbench open={workbenchOpen} initialNode={selected} year={year} onYearChange={y=>{setAutoplay(false);setYear(y)}} onClose={()=>setWorkbenchOpen(false)} onLocate={id=>{focusNode(id);setWorkbenchOpen(false)}}/></Suspense>}
     {toast && <div className="toast"><Check size={17}/>{toast}</div>}
   </div>
 }
