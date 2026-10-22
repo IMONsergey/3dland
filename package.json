@@ -10,7 +10,8 @@
     "test:smoke": "node scripts/visual-check.mjs",
     "test:deep": "node scripts/deep-qa.mjs",
     "test:release": "node scripts/release-qa.mjs",
-    "test:design": "node scripts/design-qa.mjs"
+    "test:design": "node scripts/design-qa.mjs",
+    "test:premium": "node scripts/premium-qa.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

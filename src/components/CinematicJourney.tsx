@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Mouse, X } from 'lucide-react'
 import type { Era, NodeId } from '../data/atlas'
+import { renderAssets } from './PhotoStage'
 
 export type Chapter = { number:string; label:string; year:Era; node:NodeId; lines:[string,string]; copy:string; detail:string; risk?:boolean }
 export const journeyChapters:Chapter[] = [
@@ -54,6 +55,11 @@ export function CinematicJourney({active,step,onStep,onExit,onExplore,onAtlas}:P
   if(!active)return null
   const chapter=journeyChapters[step]
   return <section className={'journey journey-step-'+step} aria-label="Путешествие в будущее производства">
+    <div className="journey-photography" aria-hidden="true">
+      {(['furnace','robots','energy','network'] as const).map((name,i)=><div key={name} className={'journey-shot '+(i===step?'active':'')}>
+        <img src={renderAssets[name]} alt="" decoding="async" loading={i===step?'eager':'lazy'}/>
+      </div>)}
+    </div>
     <header className="journey-top">
       <div className="journey-eyebrow"><span className="journey-dot"/> ЗАВОД 2040 <span>/</span> ИНТЕРАКТИВНОЕ ПУТЕШЕСТВИЕ</div>
       <button className="journey-exit" onClick={onExit}>Завершить <X size={18}/></button>

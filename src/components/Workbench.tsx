@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronRight, Compass, Search, Shield, ShieldAlert, X } from 'lucide-react'
 import { eras, eraInfo, nodeById, nodes, sectors, trackFor, trackNames, type Era, type NodeId, type NodeTrack } from '../data/atlas'
 import { research, researchMethod, eraContrast } from '../data/research'
+import { visualForNode } from './PhotoStage'
 
 type Mode = 'atlas' | 'compare' | 'method'
 type Props = {
@@ -56,7 +57,7 @@ export function Workbench({open, onClose, onLocate, initialNode, year, onYearCha
         <button className={mode==='compare'?'active':''} onClick={()=>setMode('compare')}>Сравнить годы</button>
         <button className={mode==='method'?'active':''} onClick={()=>setMode('method')}>О методе</button>
       </nav>
-      <button className="wb-close" onClick={onClose} aria-label="Вернуться к 3D-заводу">К заводу <X size={19}/></button>
+      <button className="wb-close" onClick={onClose} aria-label="Закрыть атлас">Закрыть <X size={19}/></button>
     </header>
 
     <div className="wb-layout">
@@ -96,6 +97,10 @@ export function Workbench({open, onClose, onLocate, initialNode, year, onYearCha
                 <button aria-label="Следующий узел" onClick={()=>step(1)}><ArrowRight size={19}/></button>
               </div>
             </div>
+            <figure className="wb-article-visual">
+              <img src={visualForNode(nodeId)} alt={'Концептуальная фотореалистичная визуализация: '+current.name} decoding="async" loading="eager"/>
+              <figcaption><span>ПРОМЫШЛЕННОЕ БУДУЩЕЕ / CGI-КОНЦЕПТ</span><span>{current.number}—14</span></figcaption>
+            </figure>
           </div>
           <div className="wb-part-title"><span>01 / Сценарий развития</span><p>Выберите временной горизонт</p></div>
           <div className="wb-scenario-years" role="group" aria-label="Выбор года">
