@@ -1,0 +1,137 @@
+
+/* October 2026: 3D is the primary experience again; CGI is a selectable visual layer. */
+.app-shell.view-stage.scene-mode-3d:not(.journey-active) .scene-space{
+  inset:0 -10% 0 22%!important;
+  z-index:1;
+}
+.app-shell.view-stage.scene-mode-3d .scene-vignette{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  opacity:1;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,#061410 0%,#061410f0 14%,#061410c6 24%,#06141053 39%,transparent 57%),
+    linear-gradient(0deg,#061410 0%,transparent 19%,transparent 77%,#061410a8 100%);
+}
+.hero-photo-underlay{position:absolute;inset:0;z-index:0;opacity:1;pointer-events:none;transition:opacity .75s ease,visibility .75s}
+.hero-photo-underlay.is-hidden{opacity:0;visibility:hidden}
+.app-shell.journey-active.scene-mode-3d .scene-space{
+  inset:0 -9% 0 0!important;
+  z-index:0!important;
+}
+.app-shell.journey-active.scene-mode-3d .scene-vignette{opacity:0!important}
+.app-shell.journey-active.scene-mode-3d .world-markers{opacity:0;pointer-events:none}
+.journey.journey-visual-3d{background:transparent!important}
+.journey.journey-visual-3d:before{
+  background:
+    linear-gradient(90deg,#061410f5 0%,#061410dd 26%,#06141076 44%,transparent 69%),
+    linear-gradient(0deg,#061410df 0%,transparent 25%,transparent 76%,#061410bb 100%);
+}
+.journey.journey-visual-3d .journey-ghost-year{opacity:.035}
+.visual-mode-switch{
+  position:absolute;right:clamp(30px,5vw,96px);bottom:143px;z-index:8;
+  display:flex;align-items:center;gap:8px;color:#d5e8d8;
+  padding:6px 7px 6px 16px;
+  background:#071b16dc;border:1px solid #a5e5c23f;border-radius:3px;
+  backdrop-filter:blur(13px);
+}
+.visual-mode-caption{font-size:9px;color:#a2c8ae;letter-spacing:.06em;font-weight:700;margin-right:7px}
+.visual-mode-switch button{
+  min-height:34px;display:flex;align-items:center;gap:7px;padding:0 12px;
+  font-size:10px;font-weight:750;letter-spacing:.015em;
+  color:#a5bcae;white-space:nowrap;border:1px solid transparent;border-radius:2px;
+  transition:background .2s,color .2s;
+}
+.visual-mode-switch button:hover{color:#fff}
+.visual-mode-switch button.active{color:#092c20;background:#b9f6d7}
+.visual-mode-switch button svg{flex:none}
+.stage-3d-hint{
+  position:absolute;right:clamp(30px,5vw,96px);bottom:204px;z-index:3;
+  display:flex;align-items:center;gap:11px;
+  font-size:10px;font-weight:650;letter-spacing:.045em;color:#b5d2c2;
+  pointer-events:none;
+}
+.stage-3d-hint svg{color:#b9f6d7}
+.journey-top-controls{display:flex;align-items:center;gap:28px}
+.journey-mode-switch{display:flex;align-items:center;gap:4px;padding:4px;background:#071a15cd;border:1px solid #a9e3bf4a;border-radius:3px;backdrop-filter:blur(10px)}
+.journey-mode-switch button{display:inline-flex;gap:8px;align-items:center;justify-content:center;padding:7px 12px;color:#b2cdbb;min-height:34px;font-size:10px;font-weight:700;white-space:nowrap}
+.journey-mode-switch button:hover{color:#fff}
+.journey-mode-switch button.active{background:#b6f5d7;color:#08291e;border-radius:2px}
+.journey-focus-link{
+  display:inline-flex;align-items:center;gap:9px;margin-top:25px;
+  padding:10px 0;border-bottom:1px solid #bbe6cd7c;
+  font-size:11px;font-weight:750;color:#b9f6d7;
+}
+.journey-focus-link:hover{color:#fff}
+.journey-focus-link svg:last-child{margin-left:7px}
+@media(max-width:1380px){
+  .app-shell.view-stage.scene-mode-3d:not(.journey-active) .scene-space{inset:0 -17% 0 20%!important}
+  .stage-3d-hint{bottom:210px}
+}
+@media(max-width:1050px) and (min-width:761px){
+  .app-shell.view-stage.scene-mode-3d:not(.journey-active) .scene-space{inset:0 -25% 0 12%!important}
+  .app-shell.view-stage.scene-mode-3d .scene-vignette{
+    background:linear-gradient(90deg,#061410f6 0%,#061410e7 19%,#06141076 39%,transparent 69%),
+      linear-gradient(0deg,#061410 0%,transparent 24%,transparent 80%,#061410a0 100%);
+  }
+  .visual-mode-caption{display:none}
+  .visual-mode-switch{bottom:131px}
+  .stage-3d-hint{bottom:190px}
+}
+@media(max-width:760px){
+  .app-shell.view-stage.scene-mode-3d:not(.journey-active) .scene-space{
+    inset:140px -178px 84px -192px!important;
+  }
+  .app-shell.view-stage.scene-mode-3d .scene-vignette{
+    background:linear-gradient(180deg,#061410 0%,#061410ef 17%,#061410b2 31%,#06141018 57%,#06141050 80%,#061410 100%)
+  }
+  .app-shell.journey-active.scene-mode-3d .scene-space{
+    inset:6px -160px -34px -170px!important;
+  }
+  .journey.journey-visual-3d:before{
+    background:linear-gradient(180deg,#061410f5 0%,#061410e9 24%,#06141092 45%,#06141021 70%,#061410ee 100%);
+  }
+  .journey-top-controls{gap:11px}
+  .journey-mode-switch{padding:3px;gap:1px}
+  .journey-mode-switch button{font-size:9px;gap:4px;padding:5px 7px;min-height:30px}
+  .journey-mode-switch button svg{width:13px;height:13px}
+  .journey-eyebrow{max-width:160px;font-size:8px!important;white-space:normal}
+  .journey-focus-link{font-size:10px;margin-top:17px}
+  .visual-mode-switch{
+    left:21px;right:auto;bottom:126px;gap:4px;padding:4px;
+  }
+  .visual-mode-caption{display:none}
+  .visual-mode-switch button{font-size:9px;padding:0 9px;min-height:31px;gap:5px}
+  .visual-mode-switch button svg{width:14px;height:14px}
+  .stage-3d-hint{display:none}
+  .app-shell.view-stage.scene-mode-3d .hero-edge-caption{bottom:180px}
+  .app-shell.view-stage.scene-mode-photo .hero-edge-caption{bottom:155px}
+  .hero-chapter-line{display:none}
+}
+@media(max-width:390px){
+  .visual-mode-switch{bottom:118px}
+  .app-shell.view-stage.scene-mode-3d .hero-edge-caption{bottom:167px}
+}
+@media(max-height:710px) and (max-width:760px){
+  .visual-mode-switch{bottom:102px}
+  .app-shell.view-stage.scene-mode-3d .hero-edge-caption{bottom:148px}
+  .journey-focus-link{margin-top:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-photo-underlay{transition:none!important}
+}
+
+/* Mobile: preserve clear typography while keeping the actual 3D scene directly interactive. */
+@media(max-width:760px){
+  .app-shell.view-stage.scene-mode-3d:not(.journey-active) .scene-space{
+    inset:238px -175px 55px -176px!important;
+  }
+  .app-shell.view-stage.scene-mode-3d .hero-description{display:none!important}
+  .app-shell.view-stage.scene-mode-3d .hero-actions{margin-top:21px}
+  .app-shell.view-stage.scene-mode-3d .hero-edge-caption{bottom:180px}
+}
+@media(max-height:710px) and (max-width:760px){
+  .app-shell.view-stage.scene-mode-3d:not(.journey-active) .scene-space{inset:197px -175px 40px -176px!important}
+  .app-shell.view-stage.scene-mode-3d .hero-edge-caption{bottom:149px}
+}

@@ -1,0 +1,85 @@
+/* Kaspersky 2024+ B2B direction — grounded in public brand portal and ONY case.
+   Licensed Kaspersky typefaces remain local-only; font files are NOT redistributed.
+   See docs/KASPERSKY_BRAND_COMPLIANCE.md before client handoff. */
+@font-face {font-family:'Kaspersky Display';src:local('Kaspersky Sans Display Light');font-weight:300;font-style:normal;font-display:swap}
+@font-face {font-family:'Kaspersky Display';src:local('Kaspersky Sans Display Regular');font-weight:400;font-style:normal;font-display:swap}
+@font-face {font-family:'Kaspersky Display';src:local('Kaspersky Sans Display Medium');font-weight:500;font-style:normal;font-display:swap}
+@font-face {font-family:'Kaspersky Display';src:local('Kaspersky Sans Display SemiBold');font-weight:600;font-style:normal;font-display:swap}
+@font-face {font-family:'Kaspersky Mono';src:local('KasperskySansMono-Regular');font-weight:400;font-display:swap}
+:root {
+  --k-brand:#29ccb1;
+  --k-brand-strong:#00a88f;
+  --k-emerald:#006d5c;
+  --k-ink:#1b1c19;
+  --k-paper:#f7f8f5;
+  --k-white:#ffffff;
+  --k-muted:#adb7b2;
+  --k-glow:rgba(41,204,177,.28);
+  --k-display:'Kaspersky Display','Manrope',Arial,sans-serif;
+  --k-mono:'Kaspersky Mono','DM Sans',Arial,sans-serif;
+}
+.app-shell{--accent:var(--k-brand)!important;--cinema-ink:var(--k-ink);--cinema-mint:var(--k-brand);font-family:var(--k-display);background:var(--k-ink)}
+.app-shell.era-2030,.app-shell.era-2035,.app-shell.era-2040{--accent:var(--k-brand)!important}
+.app-shell .header-logo{display:inline-flex;align-items:center;min-width:0}
+.brand-lockup{display:flex;align-items:center;gap:16px;color:#fff}
+.kaspersky-approved-wordmark{display:block;width:168px;height:auto;max-height:36px;object-fit:contain;flex:none}
+.brand-lockup-divider{height:29px;width:1px;background:#c9d4ce63;flex:none}
+.brand-project-name{font-family:var(--k-display);font-size:14px;letter-spacing:-.035em;font-weight:500;white-space:nowrap;color:#eff8f3}
+.app-shell .site-header{height:94px;gap:25px}
+.app-shell .header-nav button{font-family:var(--k-display);font-weight:500;font-size:13px;letter-spacing:-.012em}
+.app-shell .header-sector,.app-shell .header-about{font-family:var(--k-display);font-weight:500;font-size:12px}
+.app-shell.view-stage .hero-content h1{font-family:var(--k-display);font-size:clamp(82px,8.5vw,145px);font-weight:500;line-height:.92;letter-spacing:-.065em}
+.app-shell.view-stage .hero-content h1>span,.app-shell.view-stage .hero-content h1>strong{font-weight:500;letter-spacing:-.07em}
+.app-shell.view-stage .hero-content h1>strong{color:var(--k-brand)}
+.app-shell.view-stage .hero-statement{font-family:var(--k-display);font-weight:500;letter-spacing:-.025em;line-height:1.45}
+.app-shell.view-stage .hero-statement em{color:#d3f9ef;font-weight:500}
+.app-shell.view-stage .hero-description{font-family:var(--k-display);font-weight:400;font-size:14px;line-height:1.75}
+.app-shell.view-stage .primary-action{background:var(--k-brand);font-family:var(--k-display);font-weight:500;border-radius:5px;letter-spacing:0;font-size:14px}
+.app-shell.view-stage .primary-action:hover{background:#6bdec9}
+.app-shell .hero-eyebrow,.app-shell .deck-label,.visual-mode-caption,.hero-edge-caption{font-family:var(--k-mono);font-weight:400;letter-spacing:.025em!important}
+.app-shell .era-button{font-family:var(--k-display);font-weight:500;font-size:27px;letter-spacing:-.045em}
+.app-shell .era-button.active{color:var(--k-brand)}
+.app-shell .visual-mode-switch button.active,.app-shell .journey-mode-switch button.active{background:var(--k-brand);color:var(--k-ink)}
+.app-shell .primary-action,.app-shell .modal-primary{box-shadow:none}
+.app-shell .world-marker{border-color:#29ccb1aa;box-shadow:0 0 0 5px rgba(41,204,177,.12);background:#0e3228d9}
+.app-shell .world-marker.active,.app-shell .world-marker:hover{background:var(--k-brand);color:#102b23}
+.app-shell .detail-card{background:#f8faf7;color:#202a24;box-shadow:0 20px 70px rgba(0,0,0,.34)}
+.app-shell .detail-card h2{font-family:var(--k-display);font-weight:500;letter-spacing:-.035em}
+.app-shell .detail-tabs button.active{color:var(--k-emerald)}
+.app-shell .detail-research-link,.app-shell .explore-return{color:var(--k-emerald)}
+.journey{--j-accent:var(--k-brand)!important}
+.journey-copy h2{font-family:var(--k-display);font-weight:500;letter-spacing:-.045em;line-height:1.13;font-size:clamp(52px,5vw,88px)}
+.journey-copy h2 em{color:var(--k-brand)}
+.journey-kicker,.journey-detail,.journey-progress,.journey-bottom{font-family:var(--k-display)}
+.journey .journey-controls button:last-child,.journey .journey-actions button:first-child{background:var(--k-brand);border-color:var(--k-brand)}
+.wb-root{--wb-paper:var(--k-paper);--wb-green:var(--k-emerald);--wb-ink:#1b1c19;--wb-line:#dce4df;font-family:var(--k-display)!important}
+.wb-root .wb-brand,.wb-root .wb-article-top h1,.wb-root .wb-comparison h1,.wb-root .wb-method h1{font-family:var(--k-display)!important;font-weight:500;letter-spacing:-.045em}
+.wb-root .wb-brand{font-size:20px!important}
+.wb-root .wb-article-top .wb-overline,.wb-root .wb-story-label,.wb-root .wb-crumbs{font-weight:500}
+.wb-root .wb-action-main,.wb-root .wb-filters button.active{background:var(--k-emerald);font-weight:500}
+.wb-root .wb-compare-year strong,.wb-root .wb-time-choice strong{font-weight:500}
+.wb-root .wb-story-block h2,.wb-root .wb-related h2{font-weight:500;letter-spacing:-.02em}
+/* Retain calm corporate gradients; industrial orange belongs only to physical light, not UI. */
+.app-shell .photo-stage-shot img{filter:saturate(.72) contrast(1.02) brightness(.87)}
+.app-shell .scene-vignette{opacity:.84}
+@media(max-width:1360px){
+ .kaspersky-approved-wordmark{width:141px}
+ .brand-lockup{gap:11px}
+ .brand-project-name{font-size:12px}
+ .app-shell.view-stage .hero-content h1{font-size:clamp(66px,7.4vw,114px)}
+}
+@media(max-width:900px){.app-shell .header-nav{gap:13px}.kaspersky-approved-wordmark{width:124px}}
+@media(max-width:760px){
+ .app-shell .site-header{height:76px}
+ .kaspersky-approved-wordmark{width:116px}
+ .brand-lockup{gap:10px}
+ .brand-lockup-divider{height:23px}
+ .brand-project-name{font-size:11px}
+ .app-shell.view-stage .hero-content h1{font-size:clamp(56px,13vw,75px);line-height:.95}
+ .app-shell.view-stage .hero-statement{font-size:17px}
+ .app-shell.view-stage .primary-action{font-size:12px;min-height:47px}
+ .app-shell .era-button{font-size:23px}
+ .journey-copy h2{font-size:clamp(42px,10vw,63px);font-weight:500}
+ .wb-root .wb-brand{font-size:17px!important}
+}
+@media(max-width:380px){.brand-project-name{font-size:10px}.kaspersky-approved-wordmark{width:103px}}

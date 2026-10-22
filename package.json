@@ -11,7 +11,8 @@
     "test:deep": "node scripts/deep-qa.mjs",
     "test:release": "node scripts/release-qa.mjs",
     "test:design": "node scripts/design-qa.mjs",
-    "test:premium": "node scripts/premium-qa.mjs"
+    "test:premium": "node scripts/3d-primary-qa.mjs",
+    "test:3d": "node scripts/3d-primary-qa.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

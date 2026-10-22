@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Mouse, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Box, Camera, Mouse, X } from 'lucide-react'
 import type { Era, NodeId } from '../data/atlas'
 import { renderAssets } from './PhotoStage'
 
@@ -11,8 +11,11 @@ export const journeyChapters:Chapter[] = [
   { number:'04',label:'КИБЕРФИЗИЧЕСКОЕ БУДУЩЕЕ',year:2040,node:'network',lines:['Новая сила.','Новая уязвимость.'],copy:'Чем теснее связаны физические процессы и цифровые решения, тем важнее понимать, кому и чему разрешено управлять будущим.',detail:'От возможностей к доверию',risk:true },
 ]
 
-type Props={active:boolean;step:number;onStep:(value:number)=>void;onExit:()=>void;onExplore:()=>void;onAtlas:()=>void}
-export function CinematicJourney({active,step,onStep,onExit,onExplore,onAtlas}:Props){
+type Props={
+ active:boolean;step:number;onStep:(value:number)=>void;onExit:()=>void;onExplore:()=>void;onAtlas:()=>void
+ visualMode:'3d'|'photo';onVisualModeChange:(mode:'3d'|'photo')=>void;onFocusNode:()=>void
+}
+export function CinematicJourney({active,step,onStep,onExit,onExplore,onAtlas,visualMode,onVisualModeChange,onFocusNode}:Props){
   const lastAction=useRef(0)
   useEffect(()=>{
     if(!active)return
@@ -54,21 +57,28 @@ export function CinematicJourney({active,step,onStep,onExit,onExplore,onAtlas}:P
   },[active,step,onStep,onExit])
   if(!active)return null
   const chapter=journeyChapters[step]
-  return <section className={'journey journey-step-'+step} aria-label="Путешествие в будущее производства">
-    <div className="journey-photography" aria-hidden="true">
+  return <section className={'journey journey-step-'+step+' journey-visual-'+visualMode} aria-label="Путешествие в будущее производства">
+    {visualMode==='photo'&&<div className="journey-photography" aria-hidden="true">
       {(['furnace','robots','energy','network'] as const).map((name,i)=><div key={name} className={'journey-shot '+(i===step?'active':'')}>
         <img src={renderAssets[name]} alt="" decoding="async" loading={i===step?'eager':'lazy'}/>
       </div>)}
-    </div>
+    </div>}
     <header className="journey-top">
       <div className="journey-eyebrow"><span className="journey-dot"/> ЗАВОД 2040 <span>/</span> ИНТЕРАКТИВНОЕ ПУТЕШЕСТВИЕ</div>
-      <button className="journey-exit" onClick={onExit}>Завершить <X size={18}/></button>
+      <div className="journey-top-controls">
+        <div className="journey-mode-switch" role="group" aria-label="Режим сцены">
+          <button className={visualMode==='3d'?'active':''} onClick={()=>onVisualModeChange('3d')} aria-pressed={visualMode==='3d'}><Box size={15}/>3D</button>
+          <button className={visualMode==='photo'?'active':''} onClick={()=>onVisualModeChange('photo')} aria-pressed={visualMode==='photo'}><Camera size={15}/>Рендер</button>
+        </div>
+        <button className="journey-exit" onClick={onExit}>Завершить <X size={18}/></button>
+      </div>
     </header>
     <div className="journey-copy" key={step}>
       <span className="journey-kicker">{chapter.number} / 04 <i/> {chapter.label}</span>
       <h2>{chapter.lines[0]}<br/><em>{chapter.lines[1]}</em></h2>
       <p>{chapter.copy}</p>
       <div className="journey-detail">{chapter.detail}</div>
+      <button className="journey-focus-link" onClick={onFocusNode}><Box size={16}/> Открыть этот объект в 3D <ArrowUpRight size={16}/></button>
       {step===3&&<div className="journey-actions">
         <button onClick={onExplore}>Свободное исследование <ArrowUpRight size={18}/></button>
         <button onClick={onAtlas}>Открыть атлас прогнозов <ArrowRight size={16}/></button>

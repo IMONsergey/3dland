@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Line } from '@react-three/drei'
+import { OrbitControls, Line, useGLTF } from '@react-three/drei'
 import { Suspense, useEffect, useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
@@ -7,6 +7,7 @@ import { nodes, type Era, type NodeId } from '../data/atlas'
 import { EngineeringDetail } from './EngineeringDetail'
 import { CyberRiskOverlay } from './CyberRiskOverlay'
 import { FallbackWorld, WorldErrorBoundary, hasWebGL } from './FallbackWorld'
+import { AuthenticIndustrialLayer } from './AuthenticIndustrialLayer'
 
 type WorldProps = {
   year: Era
@@ -17,6 +18,7 @@ type WorldProps = {
   riskView?: boolean
   paused?: boolean
   guided?: boolean
+  onReady?: () => void
 }
 type Vec3 = [number, number, number]
 const steel = '#2b4852'
@@ -101,41 +103,6 @@ function FactoryHall() {
     <Neon p={[0,.4,2.61]} s={[5.88,.05,.06]} color="#b7dbcc"/>
   </group>
 }
-function Furnace({ year }: {year: Era}) {
-  const active = year === 2040
-  return <group position={[2.25,0,-3.7]}>
-    <Cylinder p={[.2,2.45,0]} r={1.18} rTop={.96} h={4.65} color="#38535a" />
-    <Cylinder p={[.2,5.11,0]} r={.94} rTop={.64} h={1.1} color="#647274"/>
-    <Cylinder p={[.2,5.68,0]} r={.62} h={.13} color="#a4a29b"/>
-    {Array.from({length:6},(_,i)=><Cylinder key={i} p={[.2,1.05+i*.75,0]} r={1.205} h={.075} color="#82928e" />)}
-    {Array.from({length:7},(_,i)=> {
-      const angle=i*Math.PI*2/7
-      return <Beam key={i} a={[.2+Math.cos(angle)*1.25,.3,Math.sin(angle)*1.25]} b={[.2+Math.cos(angle)*1.06,4.6,Math.sin(angle)*1.06]} width={.046}/>
-    })}
-    <Box p={[-1.6,1.65,.9]} s={[2.8,.17,1.05]} color="#74878a"/>
-    <Box p={[-1.6,2.55,.9]} s={[2.8,.1,1.05]} color="#83918b"/>
-    {[-2.85,-.4].map(x=><Beam key={x} a={[x,.22,1.28]} b={[x,2.57,1.28]} width={.06}/>)}
-    <Cylinder p={[-2.35,3.05,-.6]} r={.33} h={5.6} color="#465b63" />
-    <Cylinder p={[-2.35,5.84,-.6]} r={.41} h={.12} color="#819791" />
-    <Cylinder p={[2.0,2.35,-1.6]} r={.32} h={4.2} color="#586f73" />
-    <Cylinder p={[2,4.5,-1.6]} r={.41} h={.09} color="#97a39a" />
-    <Beam a={[.2,4.55,-.4]} b={[2,4.55,-1.6]} width={.21} color="#79908a"/>
-    <Beam a={[.85,1.1,0]} b={[2.35,1.1,0]} width={.32} color="#5c7981"/>
-    <Box p={[2.15,.26,1.25]} s={[2.5,.35,1.15]} color="#3e5158"/>
-    <Neon p={[2.15,.455,1.22]} s={[1.8,.055,.6]} color="#e88d4f" />
-    <Neon p={[2.15,.47,1.22]} s={[1.25,.06,.38]} color="#ffd28e" />
-    {[-.68,.88].map(x=><group key={x}>
-      <Beam a={[x,1.0,1.3]} b={[x,3.25,1.3]} width={.06} color="#81958e" />
-      <Beam a={[x,3.25,1.3]} b={[x+.4,3.25,.4]} width={.055} color="#81958e" />
-    </group>)}
-    <group position={[.2,3.5,0]}>
-      <mesh rotation={[-Math.PI/2,0,0]}>
-        <torusGeometry args={[1.55,.019,6,72]} />
-        <meshBasicMaterial color={active ? '#abf5d8' : '#72caba'} transparent opacity={active ? .72 : .25}/>
-      </mesh>
-    </group>
-  </group>
-}
 function Silos({ year }: {year: Era}) {
   return <group position={[7.15,0,-3.45]}>
     {[-1.05,.22,1.48].map((x,i)=><group key={i} position={[x,0,i===1?-.25:0]}>
@@ -167,30 +134,11 @@ function Warehouse({ year }: {year: Era}) {
     <Neon p={[.3,2.18,1.795]} s={[4.85,.06,.05]} color="#a4e4cf"/>
   </group>
 }
-function RobotArm({ index, year }: { index: number; year: Era }) {
-  const arm = useRef<THREE.Group>(null)
-  useFrame(({clock})=>{
-    if(arm.current) arm.current.rotation.y = Math.sin(clock.elapsedTime*.7 + index*2.3)*.48
-  })
-  return <group position={[-3.05+index*1.5, .18,3.2]}>
-    <Box p={[0,.23,0]} s={[.74,.4,.75]} color="#263f45"/>
-    <Cylinder p={[0,.51,0]} r={.31} h={.2} color="#849b93"/>
-    <group ref={arm} position={[0,.6,0]}>
-      <Beam a={[0,0,0]} b={[.46,.95,-.18]} width={.18} color={year===2040?'#b5e5bf':'#dca36a'}/>
-      <Cylinder p={[.46,.95,-.18]} r={.24} h={.28} color="#879d96"/>
-      <Beam a={[.46,.95,-.18]} b={[.25,1.7,.36]} width={.13} color={year===2040?'#b5e5bf':'#c98658'}/>
-      <Box p={[.25,1.72,.36]} s={[.34,.25,.36]} color="#324d54"/>
-      <Beam a={[.11,1.72,.45]} b={[.11,1.34,.45]} width={.06} color="#d0ded0"/>
-      <Beam a={[.4,1.72,.45]} b={[.4,1.34,.45]} width={.06} color="#d0ded0"/>
-    </group>
-  </group>
-}
 function Robotics({ year }: {year: Era}) {
   return <group>
     <Box p={[-2.45,.19,3.16]} s={[5.4,.23,2.95]} color="#44545a"/>
     <Box p={[-2.45,.35,3.16]} s={[4.9,.06,2.15]} color="#243b41"/>
     <Box p={[-2.5,.38,3.68]} s={[4.7,.04,.42]} color="#75888a"/>
-    {[0,1,2].map(i=><RobotArm key={i} index={i} year={year}/>)}
     {Array.from({length:6},(_,i)=><Box key={i} p={[-4.75+i*.9,.47,3.7]} s={[.41,.13,.34]} color={i%2?'#6e8a87':'#b26f54'}/>)}
     {[-5.15,.18].map(x=><group key={x}><Beam a={[x,.36,2.03]} b={[x,2.7,2.03]} width={.06}/>
     <Neon p={[x,2.7,2.03]} s={[.13,.1,.14]} color="#9ff0d8"/></group>)}
@@ -296,23 +244,6 @@ function Drone({index, year}: {index: number;year: Era}) {
       <Cylinder p={[x,.02,z]} r={.18} h={.02} color="#9cedd2"/>
     </group>)}
     <Neon p={[0,-.13,0]} s={[.2,.07,.2]} color="#96edc8"/>
-  </group>
-}
-function AutonomousVehicles({ year }: {year: Era}) {
-  const group=useRef<THREE.Group>(null)
-  useFrame(({clock})=>{if(group.current)group.current.position.x = Math.sin(clock.elapsedTime*.28)*4.0})
-  return <group>
-    <group ref={group} position={[0,.25,5.6]}>
-      <Box p={[0,.33,0]} s={[1.28,.43,.85]} color={year===2030?'#c58d66':'#bbd8c9'}/>
-      <Box p={[0,.6,0]} s={[.75,.2,.67]} color="#375662"/>
-      {[-.4,.4].flatMap(z=>[-.42,.42].map(x=><Cylinder key={x+'/'+z} p={[x,.13,z]} r={.16} h={.12} color="#182b31" rotation={[Math.PI/2,0,0]}/>))}
-      <Neon p={[.63,.36,0]} s={[.04,.12,.5]} color="#8df4d1"/>
-    </group>
-    {year>=2035 && [-4,3].map((x,i)=><group key={i} position={[x,.23,5.64]}>
-      <Box p={[0,.26,0]} s={[1.3,.42,.92]} color="#527d78"/>
-      <Neon p={[.66,.25,0]} s={[.04,.1,.66]} color="#9af4ce" />
-      <Box p={[0,.53,0]} s={[.75,.16,.65]} color="#a0b7ad"/>
-    </group>)}
   </group>
 }
 function FuturisticOverlays({year}: {year: Era}) {
@@ -457,6 +388,7 @@ function CameraRig({selected,resetKey,guided}:{selected:NodeId|null;resetKey:num
     onStart={()=>{if(animation.current)animation.current.active=false}}/>
 }
 function Scene({year,selected,onSelect,resetKey,riskView,guided,layerRef}:WorldProps&{layerRef:RefObject<HTMLDivElement|null>}) {
+  const authoredFurnace=useGLTF(import.meta.env.BASE_URL+'models/k-furnace-authored.glb')
   return <>
     <color attach="background" args={['#081915']} />
     <fog attach="fog" args={['#081915',35,83]}/>
@@ -469,7 +401,6 @@ function Scene({year,selected,onSelect,resetKey,riskView,guided,layerRef}:WorldP
     <group>
       <Ground year={year}/>
       <group onClick={(event)=>{event.stopPropagation();onSelect('casting')}}><FactoryHall/></group>
-      <group onClick={(event)=>{event.stopPropagation();onSelect('furnace')}}><Furnace year={year}/></group>
       <group onClick={(event)=>{event.stopPropagation();onSelect('storage')}}><Silos year={year}/></group>
       <group onClick={(event)=>{event.stopPropagation();onSelect('logistics')}}><Warehouse year={year}/></group>
       <group onClick={(event)=>{event.stopPropagation();onSelect('robotics')}}><Robotics year={year}/></group>
@@ -480,8 +411,12 @@ function Scene({year,selected,onSelect,resetKey,riskView,guided,layerRef}:WorldP
       <EngineeringDetail year={year} onSelect={onSelect}/>
       <Personnel year={year}/>
       <MaterialFlow year={year}/>
-      <AutonomousVehicles year={year}/>
+      {/* Authored GLB vehicles replace the primitive logistics proxies. */}
       {Array.from({length:5},(_,i)=><Drone key={i} index={i} year={year}/>)}
+      <group position={[2.25,.16,-3.7]} onClick={event=>{event.stopPropagation();onSelect('furnace')}}>
+        <primitive object={authoredFurnace.scene}/>
+      </group>
+      <AuthenticIndustrialLayer year={year} onSelect={onSelect}/>
       <Steam/>
       <FuturisticOverlays year={year}/>
       <CyberRiskOverlay selected={selected} active={Boolean(riskView)}/>
@@ -494,10 +429,11 @@ function Scene({year,selected,onSelect,resetKey,riskView,guided,layerRef}:WorldP
 export function IndustrialWorld(props: WorldProps) {
   const layerRef=useRef<HTMLDivElement>(null)
   const webGLSupported = useMemo(()=>hasWebGL(),[])
+  useEffect(()=>{if(!webGLSupported)props.onReady?.()},[webGLSupported,props.onReady])
   if(!webGLSupported)return <FallbackWorld onSelect={props.onSelect} selected={props.selected}/>
   return <div className="world-canvas" role="region" aria-label="Интерактивная трёхмерная модель металлургического предприятия будущего">
     <WorldErrorBoundary onSelect={props.onSelect} selected={props.selected}>
-    <Canvas frameloop={props.paused ? 'demand':'always'} shadows={window.innerWidth>760} dpr={[1,1.65]} camera={{position:[21,16,25.5],fov:40,near:.1,far:180}} gl={{antialias:true,alpha:false,powerPreference:'high-performance',toneMapping:THREE.ACESFilmicToneMapping,toneMappingExposure:1.12}} style={{touchAction:'none'}}>
+    <Canvas onCreated={()=>props.onReady?.()} frameloop={props.paused ? 'demand':'always'} shadows={window.innerWidth>760} dpr={[1,1.65]} camera={{position:[21,16,25.5],fov:40,near:.1,far:180}} gl={{antialias:true,alpha:false,powerPreference:'high-performance',toneMapping:THREE.ACESFilmicToneMapping,toneMappingExposure:1.12}} style={{touchAction:'none'}}>
       <Suspense fallback={null}><Scene {...props} layerRef={layerRef}/></Suspense>
     </Canvas>
     <div className="world-markers" ref={layerRef}>

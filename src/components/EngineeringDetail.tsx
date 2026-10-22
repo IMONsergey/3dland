@@ -89,44 +89,6 @@ function GantryCrane({year}:{year:Era}){
    </group>
  </group>
 }
-function FurnaceScaffolding({year}:{year:Era}){
- const columns:XYZ[]=[[-1.65,0,-1.65],[1.62,0,-1.65],[1.62,0,1.58],[-1.65,0,1.58]]
- return <group position={[2.25,0,-3.7]}>
-   {columns.map(([x,,z],i)=><group key={i}>
-      <Rod a={[x,.1,z]} b={[x,5.65,z]} thick={.105} mat="light"/>
-      {[1.35,2.82,4.35,5.62].map(h=><Box key={h} p={[x,h,z]} s={[.26,.16,.23]} mat="rust"/>)}
-   </group>)}
-   {[1.36,2.84,4.4,5.62].map((y,i)=><group key={i}>
-     <Box p={[0,y,-1.62]} s={[3.55,.12,.74]} mat="dark"/>
-     <Box p={[0,y,1.52]} s={[3.55,.12,.74]} mat="dark"/>
-     <Box p={[-1.67,y,0]} s={[.62,.12,3.25]} mat="dark"/>
-     <Box p={[1.67,y,0]} s={[.62,.12,3.25]} mat="dark"/>
-     {[-1.6,1.6].map(z=><group key={z}>
-       <Rod a={[-1.7,y+.4,z]} b={[1.7,y+.4,z]} thick={.023} mat="light"/>
-       {Array.from({length:9},(_,k)=><Rod key={k} a={[-1.6+k*.4,y,z]} b={[-1.6+k*.4,y+.44,z]} thick={.025} mat="light"/>)}
-     </group>)}
-   </group>)}
-   {[-1.68,1.68].map(x=><group key={x}>
-     <Rod a={[x,1.4,-1.6]} b={[x,2.8,1.58]} thick={.052} mat="iron"/>
-     <Rod a={[x,2.8,-1.6]} b={[x,4.4,1.58]} thick={.052} mat="iron"/>
-     <Rod a={[x,4.4,-1.6]} b={[x,5.55,1.58]} thick={.052} mat="iron"/>
-   </group>)}
-   <group position={[-1.95,0,1.72]}>
-     {Array.from({length:12},(_,i)=>{
-       const y=.32+i*.28
-       return <group key={i}>
-         <Box p={[(i%2)*.36,y,0]} s={[.34,.045,.78]} mat="light"/>
-         <Rod a={[-.22,y-.12,.38]} b={[-.22,y+.18,.38]} thick={.026}/>
-         <Rod a={[.65,y-.12,.38]} b={[.65,y+.18,.38]} thick={.026}/>
-       </group>
-     })}
-   </group>
-   <group position={[2.0,5.9,-1.42]}><LabelPlate text="BF-01 / BLAST FURNACE" sub="ZONE 01    •    THERMAL PROCESS" width={2.5}/></group>
-   {year>=2035 && <group position={[0,6.03,0]}>
-      <mesh rotation={[-Math.PI/2,0,0]}><ringGeometry args={[1.86,1.91,64]}/><meshBasicMaterial color={year===2040?'#b4efc6':'#81e4cc'} side={THREE.DoubleSide} transparent opacity={.55}/></mesh>
-   </group>}
- </group>
-}
 function RollingFoundry({year}:{year:Era}){
  const line=useRef<THREE.Group>(null)
  useFrame(({clock})=>{if(line.current)line.current.position.x=((clock.elapsedTime*.34)%1)*1.8})
@@ -308,7 +270,6 @@ function GroundMarks(){
 export function EngineeringDetail({year,onSelect}:{year:Era;onSelect:(id:NodeId)=>void}){
  const pick=(id:NodeId)=>(event:{stopPropagation:()=>void})=>{event.stopPropagation();onSelect(id)}
  return <group>
-   <group onClick={pick('furnace')}><FurnaceScaffolding year={year}/></group>
    <group onClick={pick('maintenance')}><GantryCrane year={year}/></group>
    <group onClick={pick('casting')}><RollingFoundry year={year}/></group>
    <group onClick={pick('water')}><TankFarm year={year}/></group>

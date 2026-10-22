@@ -47,6 +47,14 @@
 
 Файлы: Workbench.tsx, workbench.css, src/data/atlas.ts, extraNodes.ts, research.ts.
 
+## Kaspersky brand alignment and authored 3D (October 2026)
+
+- Applied the original Kaspersky white/black brand SVG lockups available in the authorized project workspace; the project title is a separate label, not an edited corporate logo.
+- Added a brand-system stylesheet using the dark neutral B2B base, emerald/mint accents, restrained layout, Kaspersky Sans local-font detection and readable fallbacks. **No proprietary font files are embedded or redistributed.** Production delivery requires the approved webfont package and license from Kaspersky.
+- Integrated an original Blender-authored industrial blast furnace GLB with steel plating, flanges, maintenance walkways and structural detail, plus licensed CC0 vehicle GLBs and Poly Haven PBR sets for concrete and corrugated steel. The scene remains a stylized industrial concept, not certified CAD or a photorealistic digital twin.
+- Brand compliance evidence and unresolved approval requirements: [docs/KASPERSKY_BRAND_COMPLIANCE.md](docs/KASPERSKY_BRAND_COMPLIANCE.md). Asset origin and license scope: [docs/ASSET_PROVENANCE.md](docs/ASSET_PROVENANCE.md).
+- The official [Kaspersky Brand Portal](https://brand.kaspersky.com/wiki/design_resources) lists the Visual Identity Guide, Web UI-kit and illustration resources. We could confirm the public listings, but not all normative asset-file contents. **Do not claim certified brandbook compliance** without an approved client handoff.
+
 ## Технологии
 
 React 19, TypeScript, Vite 6, Three.js, React Three Fiber, Drei. Ассеты графики — WebP; код 3D-сцены и редакционный атлас загружаются отдельными JS-чанками. Предусмотрены reduced-motion и fallback без WebGL. Публикация автоматически запускается в GitHub Actions на ветке main.
